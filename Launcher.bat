@@ -4,7 +4,7 @@ title Advanced Chemistry Engine — Kirill Mikhailovich Special Edition
 color 0B
 
 :: УКАЖИТЕ ЗДЕСЬ ВАШУ ССЫЛКУ НА GITHUB RAW (без слэша на конце)
-set "REPO_BASE_URL=https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main"
+set "REPO_BASE_URL=https://github.com/sv5190228-web/AdvancedChemistryEngine-KM-edition.git"
 
 echo =========================================================================
 echo   🎂 Advanced Chemistry Engine: Ляпишев Кирилл Михайлович Edition 🎂
