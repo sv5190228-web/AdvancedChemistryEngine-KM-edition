@@ -25,7 +25,7 @@
             --gold-color: #d4af37;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; user-select: none; overflow-x: hidden; }
         .header { text-align: center; margin-bottom: 20px; position: relative; padding-top: 10px; }
         
         .top-controls { position: absolute; top: 0; right: 20px; display: flex; gap: 8px; align-items: center; }
@@ -45,6 +45,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
         }
         .birthday-banner h2 { margin: 0 0 4px 0; color: var(--gold-color); font-size: 20px; }
@@ -92,6 +94,7 @@
         .preset-badge:hover { border-color: var(--accent-color); color: var(--accent-color); transform: translateY(-1px); }
         .neighbors-badge { background: linear-gradient(135deg, #420066, #007a8c); border: 1.5px solid var(--gold-color) !important; color: #fff !important; font-weight: bold; box-shadow: 0 0 12px rgba(255, 215, 0, 0.35); }
         .neighbors-badge:hover { transform: scale(1.06); box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
+        .dedication-badge { background: linear-gradient(135deg, #b8860b, #ff4081); border: 1.5px solid #fff !important; color: #fff !important; font-weight: bold; }
         .preset-del { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 4px; }
         .hud-overlay { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); padding: 10px 16px; border-radius: 8px; font-size: 13px; border: 1px solid #444; pointer-events: none; z-index: 10; color: #fff; line-height: 1.4; }
         
@@ -112,18 +115,42 @@
 
         .birthday-card-modal { background: var(--card-bg); border: 2px solid var(--gold-color); border-radius: 16px; padding: 32px; max-width: 580px; width: 90vw; text-align: center; box-shadow: 0 0 40px rgba(255, 215, 0, 0.3); }
         .measure-badge { position: absolute; bottom: 14px; right: 14px; background: rgba(0, 229, 255, 0.15); border: 1.5px solid var(--accent-color); backdrop-filter: blur(8px); padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--accent-color); z-index: 10; pointer-events: none; }
+
+        /* ANIMATIONS FOR BARBITURATION & COKE GAS */
+        @keyframes riseBubble {
+            0% { transform: translateY(0) translateX(0) scale(0.8); opacity: 0.95; }
+            50% { transform: translateY(-50vh) translateX(20px) scale(1.15); opacity: 0.75; }
+            100% { transform: translateY(-110vh) translateX(-20px) scale(0.9); opacity: 0; }
+        }
+        @keyframes cokeTripBody {
+            0% { filter: hue-rotate(0deg) saturate(1) contrast(1); transform: scale(1) rotate(0deg); }
+            20% { filter: hue-rotate(90deg) saturate(2.5) blur(1.5px); transform: scale(1.02) rotate(0.8deg) skewX(1deg); }
+            45% { filter: hue-rotate(220deg) saturate(3) contrast(1.3) blur(2px); transform: scale(0.98) rotate(-0.8deg) skewY(-1deg); }
+            75% { filter: hue-rotate(310deg) saturate(2) blur(1px); transform: scale(1.015) rotate(0.5deg); }
+            100% { filter: hue-rotate(360deg) saturate(1) contrast(1); transform: scale(1) rotate(0deg); }
+        }
+        .coke-gas-active {
+            animation: cokeTripBody 7s ease-in-out forwards;
+        }
+        @keyframes spinMeme3D {
+            0% { transform: perspective(800px) rotateY(-18deg) scale(0.95); }
+            50% { transform: perspective(800px) rotateY(18deg) scale(1.04); }
+            100% { transform: perspective(800px) rotateY(-18deg) scale(0.95); }
+        }
     </style>
 </head>
 <body>
 
-    <!-- BIRTHDAY BANNER -->
+    <!-- BIRTHDAY BANNER WITH BARBITURATION & COKE GAS BUTTONS -->
     <div class="birthday-banner">
         <div>
             <h2 id="i18n-bday-banner-title">🎂 Special Edition: С Днём Рождения, Кирилл Михайлович Ляпишев! 🎉</h2>
-            <p id="i18n-bday-banner-sub">Эксклюзивная сборка химического движка в честь лучшего учителя химии! Пусть каждая реакция идет со 100% выходом!</p>
+            <p id="i18n-bday-banner-sub">Эксклюзивная сборка химического движка в честь лучшего преподавателя химии! Пусть каждая реакция идет со 100% выходом!</p>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="top-btn festive-btn" onclick="launchConfettiSalute()" id="i18n-btn-salute">🎆 Салют!</button>
+            <button class="top-btn" onclick="triggerBarbituration()" style="border-color: #00E5FF; color: #00E5FF;" id="i18n-btn-barb">🫧 Барбитурация</button>
+            <button class="top-btn" onclick="triggerCokeGas()" style="border-color: #ff4081; color: #ff4081;" id="i18n-btn-coke">🌫️ Коксовый газ</button>
             <button class="top-btn festive-btn" onclick="openBirthdayModal()" id="i18n-btn-card">🎁 Открытка</button>
         </div>
     </div>
@@ -183,16 +210,16 @@
                     <input type="checkbox" id="forceSmiles" style="accent-color: var(--accent-color);"> <span id="i18n-force-smiles-swarm">🧬 Строгий SMILES (Python)</span>
                 </label>
             </div>
-            <p style="font-size: 14px; color: var(--text-muted); margin-top: 5px;" id="i18n-swarm-desc">Введите коэффициенты, SMILES или формулы. <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong></p>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 5px;" id="i18n-swarm-desc">Введите коэффициенты, SMILES или формулы (попробуйте <code style="color:var(--gold-color)">NaCl + H2O ➔ NaOH + HCl</code>!). <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong></p>
             
-            <div style="display: flex; gap: 15px; align-items: center; justify-content: center; margin-top: 15px;">
-                <input type="text" id="r1" placeholder="Реагент 1 (напр. C=C)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+            <div style="display: flex; gap: 15px; align-items: center; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+                <input type="text" id="r1" placeholder="Реагент 1 (напр. NaCl)" style="width: 160px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                 <span style="font-weight: bold;">+</span>
-                <input type="text" id="r2" placeholder="Реагент 2 (напр. H2)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <input type="text" id="r2" placeholder="Реагент 2 (напр. H2O)" style="width: 160px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                 <span style="font-weight: bold; font-size: 20px; color: var(--accent-color);">➔</span>
-                <input type="text" id="p1" placeholder="Продукт 1" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <input type="text" id="p1" placeholder="Продукт 1 (напр. NaOH)" style="width: 160px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                 <span style="font-weight: bold;">+</span>
-                <input type="text" id="p2" placeholder="Продукт 2 (опц.)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <input type="text" id="p2" placeholder="Продукт 2 (напр. HCl)" style="width: 160px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
             </div>
 
             <div class="controls-panel">
@@ -236,12 +263,12 @@
             </div>
             <div id="animStatus" class="status-msg" style="margin-top: 10px;"></div>
             
-            <div id="threejs-container" style="width: 100%; height: 400px; background: #1e1e1e; border-radius: 6px; margin-top: 15px; overflow: hidden; display: none;"></div>
+            <div id="threejs-container" style="width: 100%; height: 420px; background: #1e1e1e; border-radius: 6px; margin-top: 15px; overflow: hidden; display: none; position: relative;"></div>
         </div>
 
         <!-- 3D MOLECULAR WORKBENCH -->
         <div class="card" style="grid-column: 1 / -1; border-top: 4px solid var(--gold-color); margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="margin: 0; font-size: 20px;" id="i18n-wb-title">🏗️ 3D Молекулярный Конструктор (Kirill Mikhailovich Pro Suite)</h2>
                     <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;" id="i18n-wb-nav">
@@ -261,14 +288,14 @@
             </div>
 
             <!-- SMILES LOADER TOOLBAR -->
-            <div style="display: flex; gap: 10px; align-items: center; background: var(--wiki-bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+            <div style="display: flex; gap: 10px; align-items: center; background: var(--wiki-bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-wrap: wrap;">
                 <span style="font-size: 13px; font-weight: bold; color: var(--accent-color); white-space: nowrap;" id="i18n-smiles-loader-lbl">🧬 Загрузчик SMILES:</span>
                 <input type="text" id="builderSmilesInput" placeholder="Вставьте SMILES для 3D-генерации (напр. CCO, c1ccccc1)..." style="flex: 1; padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                 <button class="tool-btn" onclick="loadSmilesToWorkspace(false)" id="i18n-btn-replace">📥 Заменить сцену</button>
                 <button class="tool-btn" onclick="loadSmilesToWorkspace(true)" id="i18n-btn-append">➕ Добавить на сцену</button>
             </div>
 
-            <!-- Action Toolbar (Hotkeys 1, 2, 3, R) -->
+            <!-- Action Toolbar (Hotkeys 1, 2, 3, R + Atom Labels + 2D Skeletal Mode) -->
             <div class="builder-toolbar" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <span style="font-size: 13px; font-weight: bold; margin-right: 5px;" id="i18n-lbl-hotkeys">Инструменты:</span>
                 <button class="tool-btn active" id="btn-tool-select" onclick="setBuilderTool('select')">👆 [1] Выбор / Гизмо</button>
@@ -276,11 +303,15 @@
                 <button class="tool-btn" id="btn-tool-add" onclick="setBuilderTool('add')">➕ [2] Создать атом</button>
                 <button class="tool-btn" id="btn-tool-bond" onclick="setBuilderTool('bond')">🔗 [3] Связать (Группа ➔ Цель)</button>
                 <button class="tool-btn" onclick="deleteSelectedAtoms()" style="color: #ff5252;" id="i18n-btn-del">🗑️ [Del] Удалить</button>
+
+                <!-- БИЛБОРДЫ НАДПИСЕЙ И 2D СКЕЛЕТНЫЙ ВИД В 3D СЦЕНЕ -->
+                <button class="tool-btn active" id="btn-toggle-labels" onclick="toggleAtomLabels()" style="border-color: var(--gold-color);">🏷️ Надписи атомов: ВКЛ</button>
+                <button class="tool-btn" id="btn-toggle-skeletal2d" onclick="toggleSkeletal2DView()" style="border-color: #00e676; color: #00e676;">📐 2D Скелетный 3D-вид</button>
                 
                 <!-- Floor Size Selector -->
-                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; border-left: 1px solid var(--border-color); padding-left: 10px;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; border-left: 1px solid var(--border-color); padding-left: 10px;">
                     <span style="font-size: 13px; font-weight: bold;" id="i18n-lbl-floor">📐 Сетка:</span>
-                    <input type="number" id="builderGridSize" min="10" max="300" step="10" value="30" style="width: 55px; padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-weight: bold;" onchange="updateGridSize(parseInt(this.value))">
+                    <input type="number" id="builderGridSize" min="10" max="300" step="10" value="40" style="width: 55px; padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-weight: bold;" onchange="updateGridSize(parseInt(this.value))">
                     <span style="font-size: 12px; color: var(--text-muted);">m</span>
                 </div>
 
@@ -318,16 +349,18 @@
                 </button>
             </div>
 
-            <!-- Quick Fragment Palette (WITH "СОСЕДИ" He-Fr BUTTON!) -->
+            <!-- Quick Fragment Palette (WITH "СОСЕДИ" He-Fr & DEDICATION BUTTONS!) -->
             <div style="background: var(--wiki-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin: 12px 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <span style="font-size: 13px; font-weight: bold; color: var(--accent-color);" id="i18n-lbl-fragments">⚡ Быстрые взаимодействия и фрагменты:</span>
                     <button class="tool-btn" onclick="saveCurrentAsCustomPreset()" style="font-size: 11px; padding: 4px 10px;" id="i18n-btn-savepreset">⭐ Сохранить сцену как пресет</button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center;">
-                    <!-- СПЕЦИАЛЬНАЯ КНОПКА "СОСЕДИ" (ГЕЛИЙ + ФРАНЦИЙ) -->
                     <span class="preset-badge neighbors-badge" onclick="spawnNeighborsHeFr()" id="i18n-btn-neighbors" title="Создать соединенные Гелий (He) и Франций (Fr)">
                         🤝 Соседи (He—Fr)
+                    </span>
+                    <span class="preset-badge dedication-badge" onclick="loadBirthdayDedication()" id="i18n-btn-dedication" title="Выложить органическую композицию Кириллу Михайловичу">
+                        🏆 Посвящение К.М. (Серотонин + Надпись)
                     </span>
                     <span class="preset-badge" onclick="insertPresetSMILES('c1ccccc1')">🔷 Benzene</span>
                     <span class="preset-badge" onclick="insertPresetSMILES('c1ccncc1')">🔷 Pyridine</span>
@@ -347,7 +380,7 @@
                 <div class="hud-overlay" id="builderHud">Атомов: 0 | Выбрано: 0</div>
                 <div class="measure-badge" id="measureBadge">📏 Размер: -</div>
                 <div id="selection-box"></div>
-                <div id="builder-canvas-container" style="width: 100%; height: 520px; background: #151515; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;"></div>
+                <div id="builder-canvas-container" style="width: 100%; height: 550px; background: #151515; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;"></div>
             </div>
 
             <!-- Analysis Output -->
@@ -384,9 +417,9 @@
             <p style="font-size: 15px; line-height: 1.6; color: var(--text-color);" id="i18n-modal-bday-p">
                 Спасибо Вам за вдохновение, глубокие знания и любовь к настоящей науке! 
                 Это специальное именное издание <strong>Advanced Chemistry Engine</strong> создано специально для Вас. 
-                В 3D-редактор также добавлена эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>, соединяющая самые далекие противоположности таблицы Менделеева — Гелий и Франций!
+                На 3D-сцене Вас уже ждёт органический комплекс-посвящение, а также эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>!
             </p>
-            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <button class="primary-btn" onclick="closeBirthdayModal(); spawnNeighborsHeFr();" style="background: var(--gold-color); color: #000;" id="i18n-modal-bday-try">🤝 Испытать «Соседей (He—Fr)»</button>
                 <button class="tool-btn" onclick="closeBirthdayModal()" id="i18n-modal-bday-close">Закрыть</button>
             </div>
@@ -403,8 +436,10 @@
         const I18N = {
             ru: {
                 'bday-banner-title': '🎂 Special Edition: С Днём Рождения, Кирилл Михайлович Ляпишев! 🎉',
-                'bday-banner-sub': 'Эксклюзивная сборка химического движка в честь лучшего учителя химии! Пусть каждая реакция идет со 100% выходом!',
+                'bday-banner-sub': 'Эксклюзивная сборка химического движка в честь лучшего преподавателя химии! Пусть каждая реакция идет со 100% выходом!',
                 'btn-salute': '🎆 Салют!',
+                'btn-barb': '🫧 Барбитурация',
+                'btn-coke': '🌫️ Коксовый газ',
                 'btn-card': '🎁 Открытка',
                 'app-subtitle': 'Ищите любые соединения, переводите названия автоматически и изучайте 3D-структуры.',
                 'btn-analyze': 'Анализировать',
@@ -419,7 +454,7 @@
                 'lbl-showh': 'Показывать водород (H)',
                 'swarm-title': '🎬 Аниматор реакций True-Time Swarm',
                 'force-smiles-swarm': '🧬 Строгий SMILES (Python)',
-                'swarm-desc': 'Введите коэффициенты, SMILES или формулы. <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong>',
+                'swarm-desc': 'Введите коэффициенты, SMILES или формулы (попробуйте <code style="color:var(--gold-color)">NaCl + H2O ➔ NaOH + HCl</code>!). <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong>',
                 'swarm-cfg': '⚙️ Настройки времени и вращения',
                 'sl-dur': '⏳ Длительность анимации (сек)',
                 'sl-c1': 'Скорость орбиты сцены 1',
@@ -462,6 +497,7 @@
                 'lbl-fragments': '⚡ Быстрые взаимодействия и фрагменты:',
                 'btn-savepreset': '⭐ Сохранить сцену как пресет',
                 'btn-neighbors': '🤝 Соседи (He—Fr)',
+                'btn-dedication': '🏆 Посвящение К.М. (Серотонин + Надпись)',
                 'btn-identify': '🧪 Распознать вещество и вывести SMILES',
                 'lbl-intel': '🔬 Результат анализа структуры',
                 'lbl-derived-smiles': 'Канонический SMILES:',
@@ -469,7 +505,7 @@
                 'modal-ptable-title': '🧪 Периодическая система элементов Д. И. Менделеева',
                 'modal-ptable-sub': 'Нажмите на любой элемент, чтобы выбрать его для строительства и закрепить на панели быстрого доступа.',
                 'modal-bday-h': 'С Днём Рождения, Кирилл Михайлович!',
-                'modal-bday-p': 'Спасибо Вам за вдохновение, глубокие знания и любовь к настоящей науке! Это специальное именное издание <strong>Advanced Chemistry Engine</strong> создано специально для Вас. В 3D-редактор также добавлена эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>, соединяющая самые далекие противоположности таблицы Менделеева — Гелий и Франций!',
+                'modal-bday-p': 'Спасибо Вам за вдохновение, глубокие знания и любовь к настоящей науке! Это специальное именное издание <strong>Advanced Chemistry Engine</strong> создано специально для Вас. На 3D-сцене Вас уже ждёт органический комплекс-посвящение, а также эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>!',
                 'modal-bday-try': '🤝 Испытать «Соседей (He—Fr)»',
                 'modal-bday-close': 'Закрыть',
                 'search-ph': "например: 'соляная кислота', 'H2O' или 'CCO'",
@@ -480,6 +516,8 @@
                 'bday-banner-title': '🎂 Special Edition: Happy Birthday, Kirill Mikhailovich Lyapishev! 🎉',
                 'bday-banner-sub': 'Exclusive build of the Advanced Chemistry Engine honoring the best chemistry teacher! May every reaction yield 100%!',
                 'btn-salute': '🎆 Fireworks!',
+                'btn-barb': '🫧 Barbituration',
+                'btn-coke': '🌫️ Coke Oven Gas',
                 'btn-card': '🎁 Greeting Card',
                 'app-subtitle': 'Search any compound, translate names automatically, and explore interactive 3D structures.',
                 'btn-analyze': 'Analyze',
@@ -494,7 +532,7 @@
                 'lbl-showh': 'Show Hydrogen (H)',
                 'swarm-title': '🎬 True-Time Swarm Engine',
                 'force-smiles-swarm': '🧬 Force Strict SMILES (Python)',
-                'swarm-desc': 'Enter coefficients, SMILES, or formulas. <strong style="color: var(--accent-color);">Click & Drag to spin the 3D space during recording!</strong>',
+                'swarm-desc': 'Enter coefficients, SMILES, or formulas (try <code style="color:var(--gold-color)">NaCl + H2O ➔ NaOH + HCl</code>!). <strong style="color: var(--accent-color);">Click & Drag to spin the 3D space during recording!</strong>',
                 'swarm-cfg': '⚙️ True-Time Configuration',
                 'sl-dur': '⏳ Total Animation Duration (Seconds)',
                 'sl-c1': 'Scene Auto-Orbit 1 Speed',
@@ -537,6 +575,7 @@
                 'lbl-fragments': '⚡ Quick Fragments & Interactions:',
                 'btn-savepreset': '⭐ Save Current as Preset',
                 'btn-neighbors': '🤝 Neighbors (He—Fr)',
+                'btn-dedication': '🏆 Dedication to K.M. (Serotonin + Banner)',
                 'btn-identify': '🧪 Identify Compound & Derive SMILES',
                 'lbl-intel': '🔬 Structure Intelligence Output',
                 'lbl-derived-smiles': 'Derived Canonical SMILES:',
@@ -553,6 +592,60 @@
             }
         };
 
+        // ЭФФЕКТ 1: БАРБИТУРАЦИЯ (ВСПЛЫВАЮЩИЕ ПУЗЫРЬКИ ПЕРЕД ЭКРАНОМ)
+        function triggerBarbituration() {
+            const container = document.createElement('div');
+            container.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:9999; overflow:hidden;';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < 65; i++) {
+                const b = document.createElement('div');
+                const size = Math.random() * 38 + 12;
+                const left = Math.random() * 100;
+                const dur = (Math.random() * 2.8 + 2.0).toFixed(2);
+                const delay = (Math.random() * 1.5).toFixed(2);
+                b.style.cssText = `
+                    position: absolute;
+                    bottom: -60px;
+                    left: ${left}vw;
+                    width: ${size}px;
+                    height: ${size}px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(0,229,255,0.45) 55%, rgba(0,119,255,0.15));
+                    border: 1px solid rgba(255,255,255,0.6);
+                    box-shadow: 0 0 12px rgba(0,229,255,0.5), inset 0 0 8px rgba(255,255,255,0.7);
+                    animation: riseBubble ${dur}s ease-in forwards;
+                    animation-delay: ${delay}s;
+                `;
+                container.appendChild(b);
+            }
+
+            setTimeout(() => container.remove(), 5200);
+        }
+
+        // ЭФФЕКТ 2: КОКСОВЫЙ ГАЗ (ВСЁ ПЛЫВЕТ И ИСКАЖАЕТСЯ)
+        function triggerCokeGas() {
+            document.body.classList.remove('coke-gas-active');
+            void document.body.offsetWidth;
+            document.body.classList.add('coke-gas-active');
+
+            const smokeOverlay = document.createElement('div');
+            smokeOverlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                pointer-events: none; z-index: 9998;
+                background: radial-gradient(circle, rgba(156,39,176,0.18), rgba(0,229,255,0.15), rgba(76,175,80,0.2));
+                backdrop-filter: blur(3px);
+                transition: opacity 1s;
+            `;
+            document.body.appendChild(smokeOverlay);
+
+            setTimeout(() => { smokeOverlay.style.opacity = '0'; }, 6000);
+            setTimeout(() => {
+                smokeOverlay.remove();
+                document.body.classList.remove('coke-gas-active');
+            }, 7200);
+        }
+
         function applyLanguage() {
             const dict = I18N[currentLang];
             Object.keys(dict).forEach(key => {
@@ -563,6 +656,7 @@
             document.getElementById('builderSmilesInput').placeholder = dict['smiles-ph'];
             document.getElementById('langToggleBtn').innerText = currentLang === 'ru' ? '🇷🇺 RU ➔ 🇬🇧 EN' : '🇬🇧 EN ➔ 🇷🇺 RU';
             updateThemeButtonLabel();
+            updateLabelAndSkeletalButtons();
             updateBuilderHud();
             updateGeometricMeasurement();
         }
@@ -610,6 +704,8 @@
             renderHotbar();
             buildPeriodicTableGrid();
             applyLanguage();
+            // Выкладываем посвящение Кириллу Михайловичу + молекулу Серотонина при старте!
+            loadBirthdayDedication();
             setTimeout(launchConfettiSalute, 500);
         };
 
@@ -718,12 +814,39 @@
             } catch(e) { document.getElementById("wikiExtract").innerText = currentLang === 'ru' ? "Статья в Википедии не найдена." : "Information not available on Wikipedia."; }
         }
 
+        function isNaClWaterMemeEquation(str) {
+            const clean = str.replace(/\s+/g, '').toUpperCase().replace(/➔|->|=>/g, '=');
+            if (!clean.includes('=')) return false;
+            const [left, right] = clean.split('=');
+            const hasNaCl = left.includes('NACL');
+            const hasH2O = left.includes('H2O') || left.includes('OH2');
+            const hasNaOH = right.includes('NAOH');
+            const hasHCl = right.includes('HCL');
+            return hasNaCl && hasH2O && hasNaOH && hasHCl;
+        }
+
         async function processSearch() {
             const rawInput = document.getElementById("searchInput").value.trim();
             const statusMsg = document.getElementById("statusMsg");
             const forceSmilesTop = document.getElementById("forceSmilesTop").checked;
             
             if (!rawInput) return;
+
+            if (isNaClWaterMemeEquation(rawInput)) {
+                document.getElementById("outName").innerText = "NaCl + H2O = NaOH + HCl (Мемная реакция!)";
+                document.getElementById("outFormula").innerText = "NaCl + H2O";
+                document.getElementById("outWeight").innerText = "76.45";
+                document.getElementById("outSmiles").innerText = "[Na+].[Cl-].O";
+                document.getElementById("img2d").src = "image.png";
+                document.getElementById("wikiExtract").innerHTML = "<b>Запретная алхимия:</b> Попытка получить щелочь и соляную кислоту простым растворением пельменной соли в воде без электролиза!";
+                document.getElementById("r1").value = "NaCl";
+                document.getElementById("r2").value = "H2O";
+                document.getElementById("p1").value = "NaOH";
+                document.getElementById("p2").value = "HCl";
+                playProceduralCutscene();
+                return;
+            }
+
             statusMsg.innerText = currentLang === 'ru' ? "Анализируем соединение..." : "Analyzing compound...";
             try {
                 const pubChemData = await smartChemFetch(rawInput, forceSmilesTop);
@@ -825,7 +948,9 @@
             navigator.clipboard.writeText(currentSmiles);
         }
 
-        // SWARM ENGINE IMPLEMENTATION
+        // =========================================================================
+        // 🎬 SWARM ENGINE + МЕМ NaCl + H2O = NaOH + HCl (image.png В СЦЕНЕ!)
+        // =========================================================================
         let reactionScene, reactionCamera, reactionRenderer, controls;
 
         const HARDCODED_GASES = {
@@ -836,9 +961,106 @@
         };
 
         function extractCoefficient(input) {
-            let match = input.match(/^(\d+)(.*)/);
-            if (match) return { coef: parseInt(match[1]), formula: match[2] };
-            return { coef: 1, formula: input };
+            let match = input.match(/^(\d+)\s*(.*)/);
+            if (match) return { coef: parseInt(match[1]), formula: match[2].trim() };
+            return { coef: 1, formula: input.trim() };
+        }
+
+        function checkReactionMemeInputs(r1Raw, r2Raw, p1Raw, p2Raw) {
+            const combined = `${r1Raw}+${r2Raw}=${p1Raw}+${p2Raw}`;
+            if (isNaClWaterMemeEquation(r1Raw) || isNaClWaterMemeEquation(combined)) return true;
+
+            const norm = s => extractCoefficient(s).formula.replace(/\s+/g, '').toUpperCase();
+            const reactants = [norm(r1Raw), norm(r2Raw)];
+            const products = [norm(p1Raw), norm(p2Raw)];
+
+            const hasNaCl = reactants.includes('NACL');
+            const hasH2O = reactants.includes('H2O') || reactants.includes('OH2');
+            const hasNaOH = products.includes('NAOH');
+            const hasHCl = products.includes('HCL');
+
+            return hasNaCl && hasH2O && hasNaOH && hasHCl;
+        }
+
+        async function playMemeImageScene(container, status) {
+            container.style.display = "block";
+            container.innerHTML = "";
+            status.innerText = "🚨 ОБНАРУЖЕНА СВЕРХСЕКРЕТНАЯ РЕАКЦИЯ: NaCl + H2O = NaOH + HCl! 🚨";
+            status.style.color = "var(--gold-color)";
+
+            reactionScene = new THREE.Scene();
+            reactionScene.background = new THREE.Color(0x181824);
+            reactionCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            reactionCamera.position.set(0, 0, 12);
+
+            reactionRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            reactionRenderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(reactionRenderer.domElement);
+
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                controls = new THREE.OrbitControls(reactionCamera, reactionRenderer.domElement);
+                controls.enableDamping = true;
+            }
+
+            reactionScene.add(new THREE.AmbientLight(0xffffff, 1.0));
+
+            let imgSrc = "image.png";
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/meme_image');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.image) imgSrc = data.image;
+                }
+            } catch (e) {}
+
+            // 1. Создаем 3D-плоскость с текстурой image.png прямо в Three.js сцене
+            const texLoader = new THREE.TextureLoader();
+            let planeMesh = null;
+            texLoader.load(
+                imgSrc,
+                (texture) => {
+                    const aspect = (texture.image && texture.image.width && texture.image.height)
+                        ? (texture.image.width / texture.image.height) : 1.33;
+                    const geo = new THREE.PlaneGeometry(7.5 * aspect, 7.5);
+                    const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                    planeMesh = new THREE.Mesh(geo, mat);
+                    reactionScene.add(planeMesh);
+                    const domFallback = document.getElementById('meme-dom-fallback');
+                    if (domFallback) domFallback.style.display = 'none';
+                },
+                undefined,
+                () => {
+                    // Если браузер заблокировал WebGL-текстуру по file://, оставляем красивый 3D DOM-объект внутри сцены
+                }
+            );
+
+            // 2. Гарантированный 3D-холст поверх сцены (на случай открытия без локального сервера через file://)
+            const overlayDiv = document.createElement('div');
+            overlayDiv.id = 'meme-dom-fallback';
+            overlayDiv.style.cssText = `
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                pointer-events: none; z-index: 5;
+            `;
+            overlayDiv.innerHTML = `
+                <img src="image.png" alt="NaCl + H2O = NaOH + HCl" style="max-height: 82%; max-width: 85%; border-radius: 12px; border: 3px solid var(--gold-color); box-shadow: 0 0 35px rgba(255,215,0,0.5); animation: spinMeme3D 4s ease-in-out infinite;" onerror="this.outerHTML='<div style=\\'padding:25px; background:rgba(0,0,0,0.85); border:2px solid gold; border-radius:12px; color:gold; font-size:20px; text-align:center;\\'>🖼️ Положите файл <b>image.png</b> в одну папку с HTML!<br><small style=\\'color:#fff\\'>NaCl + H₂O ➔ NaOH + HCl</small></div>'">
+            `;
+            container.appendChild(overlayDiv);
+
+            launchConfettiSalute();
+
+            let animFrames = 0;
+            function animateMeme() {
+                animFrames++;
+                if (controls) controls.update();
+                if (planeMesh) {
+                    planeMesh.rotation.y = Math.sin(animFrames * 0.025) * 0.45;
+                    planeMesh.rotation.x = Math.cos(animFrames * 0.015) * 0.12;
+                }
+                reactionRenderer.render(reactionScene, reactionCamera);
+                if (animFrames < 900) requestAnimationFrame(animateMeme);
+            }
+            animateMeme();
         }
 
         function createAtomMesh(elem, x, y, z) {
@@ -849,7 +1071,7 @@
             const mat = new THREE.MeshPhongMaterial({ color: colorHex, shininess: 100 });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, y, z);
-            mesh.userData = { elem: key, charge: 0.0 }; 
+            mesh.userData = { elem: key, charge: 0.0, baseRadius: radius }; 
             return mesh;
         }
 
@@ -861,9 +1083,9 @@
             const dir = pos2.clone().sub(pos1).normalize();
             let perp = new THREE.Vector3(0, 1, 0).cross(dir);
             if (perp.lengthSq() < 0.01) perp = new THREE.Vector3(1, 0, 0).cross(dir);
-            perp.normalize().multiplyScalar(0.25); 
+            perp.normalize().multiplyScalar(0.22); 
 
-            const geo = new THREE.CylinderGeometry(0.04, 0.04, distance, 8); 
+            const geo = new THREE.CylinderGeometry(0.055, 0.055, distance, 10); 
             const mat = new THREE.MeshPhongMaterial({ color: 0xcccccc });
 
             const drawCyl = (offsetVec) => {
@@ -880,8 +1102,8 @@
                 drawCyl(perp.clone().negate());
             } else if (order === 3) {
                 drawCyl(new THREE.Vector3(0,0,0));
-                drawCyl(perp.clone().multiplyScalar(1.5)); 
-                drawCyl(perp.clone().multiplyScalar(-1.5));
+                drawCyl(perp.clone().multiplyScalar(1.4)); 
+                drawCyl(perp.clone().multiplyScalar(-1.4));
             } else {
                 drawCyl(new THREE.Vector3(0,0,0));
             }
@@ -959,6 +1181,20 @@
         async function playProceduralCutscene() {
             if (typeof THREE === 'undefined') { document.getElementById("animStatus").innerText = "Error: Engine missing."; return; }
 
+            const rawR1 = document.getElementById("r1").value.trim();
+            const rawR2 = document.getElementById("r2").value.trim();
+            const rawP1 = document.getElementById("p1").value.trim();
+            const rawP2 = document.getElementById("p2").value.trim();
+
+            const container = document.getElementById("threejs-container");
+            const status = document.getElementById("animStatus");
+
+            // ПРОВЕРКА НА МЕМ: NaCl + H2O = NaOH + HCl (неважно, уравнено или нет)
+            if (checkReactionMemeInputs(rawR1, rawR2, rawP1, rawP2)) {
+                await playMemeImageScene(container, status);
+                return;
+            }
+
             const durationSec = parseFloat(document.getElementById("animDuration").value);
             const cS1 = parseFloat(document.getElementById("camSpeed1").value);
             const cS2 = parseFloat(document.getElementById("camSpeed2").value);
@@ -967,13 +1203,11 @@
             const sP1 = parseFloat(document.getElementById("spinP1").value);
             const sP2 = parseFloat(document.getElementById("spinP2").value);
 
-            const r1_obj = extractCoefficient(document.getElementById("r1").value.trim());
-            const r2_obj = extractCoefficient(document.getElementById("r2").value.trim());
-            const p1_obj = extractCoefficient(document.getElementById("p1").value.trim());
-            const p2_obj = extractCoefficient(document.getElementById("p2").value.trim());
+            const r1_obj = extractCoefficient(rawR1);
+            const r2_obj = extractCoefficient(rawR2);
+            const p1_obj = extractCoefficient(rawP1);
+            const p2_obj = extractCoefficient(rawP2);
 
-            const container = document.getElementById("threejs-container");
-            const status = document.getElementById("animStatus");
             const forceSmiles = document.getElementById("forceSmiles").checked;
             
             if (!r1_obj.formula || !p1_obj.formula) {
@@ -1140,7 +1374,7 @@
         }
 
         // =========================================================================
-        // 🏗️ 3D WORKBENCH + SPECIAL "СОСЕДИ (He—Fr)" INTERACTION
+        // 🏗️ 3D WORKBENCH + НАДПИСИ АТОМОВ + 2D СКЕЛЕТНЫЙ ВИД + ПОСВЯЩЕНИЕ К.М.
         // =========================================================================
         let builderScene, builderCamera, builderRenderer, builderControls, transformControls;
         let builderAtoms = [];
@@ -1158,11 +1392,203 @@
         let cachedIsomers = [];
         let currentIsomerIndex = 0;
         let keysPressed = {};
-        let currentGridSize = 30;
+        let currentGridSize = 40;
         let showingGasteigerCharges = false;
         let measureLineMeshes = [];
+        let dedicationBannerSprite = null;
+
+        // НОВЫЕ ПЕРЕКЛЮЧАТЕЛИ: Следящие за камерой надписи на атомах + 2D Скелетный вид
+        let showAtomLabels = true;
+        let skeletal2DMode = false;
 
         let hotbarElements = JSON.parse(localStorage.getItem('ace_hotbar_elements') || '["C", "H", "O", "N", "He", "Fr", "P", "S", "Cl", "F", "Pt", "Fe"]');
+
+        // СОЗДАНИЕ СЛЕДЯЩЕГО ЗА КАМЕРОЙ 3D-БИЛБОРДА (THREE.Sprite) ДЛЯ АТОМА
+        function createAtomBillboardSprite(symbol, colorHex, flatSkeletalStyle = false) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            const hexStr = '#' + colorHex.toString(16).padStart(6, '0');
+
+            if (flatSkeletalStyle) {
+                // Плоская 2D-буква гетероатома для скелетного режима
+                ctx.fillStyle = 'rgba(21, 21, 21, 0.88)';
+                ctx.beginPath();
+                ctx.arc(64, 64, 48, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = hexStr;
+                ctx.stroke();
+
+                ctx.font = 'bold 54px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = hexStr === '#ffffff' ? '#e0e0e0' : hexStr;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(symbol, 64, 66);
+            } else {
+                // Компактный парящий бейдж над атомом
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+                ctx.strokeStyle = hexStr;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.roundRect(18, 30, 92, 68, 18);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 44px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(symbol, 64, 65);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.renderOrder = 999;
+            return sprite;
+        }
+
+        // СОЗДАНИЕ 3D-БАННЕРА ПОСВЯЩЕНИЯ КИРИЛЛУ МИХАЙЛОВИЧУ (ВСЕГДА СМОТРИТ В КАМЕРУ)
+        function createDedication3DBanner(textTop, textSub) {
+            if (dedicationBannerSprite) {
+                builderScene.remove(dedicationBannerSprite);
+                dedicationBannerSprite = null;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 220;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, 1024, 220);
+            grad.addColorStop(0, 'rgba(30, 20, 50, 0.92)');
+            grad.addColorStop(0.5, 'rgba(15, 40, 60, 0.92)');
+            grad.addColorStop(1, 'rgba(50, 30, 10, 0.92)');
+
+            ctx.fillStyle = grad;
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.roundRect(12, 12, 1000, 196, 28);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = 'bold 42px "Segoe UI", Arial, sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'center';
+            ctx.fillText(textTop, 512, 88);
+
+            ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
+            ctx.fillStyle = '#00E5FF';
+            ctx.fillText(textSub, 512, 152);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+            dedicationBannerSprite = new THREE.Sprite(mat);
+            dedicationBannerSprite.scale.set(16, 3.4, 1);
+            dedicationBannerSprite.position.set(0, 6.2, 0);
+            dedicationBannerSprite.renderOrder = 1000;
+            builderScene.add(dedicationBannerSprite);
+        }
+
+        function updateLabelAndSkeletalButtons() {
+            const lblBtn = document.getElementById('btn-toggle-labels');
+            const skelBtn = document.getElementById('btn-toggle-skeletal2d');
+            if (lblBtn) {
+                lblBtn.classList.toggle('active', showAtomLabels);
+                if (currentLang === 'ru') {
+                    lblBtn.innerText = showAtomLabels ? '🏷️ Надписи атомов: ВКЛ' : '🏷️ Надписи атомов: ВЫКЛ';
+                } else {
+                    lblBtn.innerText = showAtomLabels ? '🏷️ Atom Labels: ON' : '🏷️ Atom Labels: OFF';
+                }
+            }
+            if (skelBtn) {
+                skelBtn.classList.toggle('active', skeletal2DMode);
+                if (currentLang === 'ru') {
+                    skelBtn.innerText = skeletal2DMode ? '📐 2D Скелетный вид: ВКЛ' : '📐 2D Скелетный 3D-вид';
+                } else {
+                    skelBtn.innerText = skeletal2DMode ? '📐 2D Skeletal View: ON' : '📐 2D Skeletal 3D-View';
+                }
+            }
+        }
+
+        function toggleAtomLabels() {
+            showAtomLabels = !showAtomLabels;
+            updateLabelAndSkeletalButtons();
+            refreshSceneVisualMode();
+        }
+
+        function toggleSkeletal2DView() {
+            skeletal2DMode = !skeletal2DMode;
+            updateLabelAndSkeletalButtons();
+            refreshSceneVisualMode();
+        }
+
+        // ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ АТОМОВ И СВЯЗЕЙ (ОБЫЧНЫЙ 3D ИЛИ 2D СКЕЛЕТНЫЙ РЕЖИМ)
+        function refreshSceneVisualMode() {
+            // Определяем соседей каждого атома
+            const neighborMap = new Map();
+            builderAtoms.forEach(a => neighborMap.set(a, []));
+            builderBonds.forEach(b => {
+                if (neighborMap.has(b.atom1)) neighborMap.get(b.atom1).push(b.atom2);
+                if (neighborMap.has(b.atom2)) neighborMap.get(b.atom2).push(b.atom1);
+            });
+
+            builderAtoms.forEach(atom => {
+                const neighbors = neighborMap.get(atom) || [];
+                const isCarbonInChain = (atom.element === 'C' && neighbors.length > 0);
+                const isNonPolarH = (atom.element === 'H' && neighbors.length === 1 && neighbors[0].element === 'C');
+
+                if (skeletal2DMode) {
+                    if (isNonPolarH) {
+                        // Неполярный водород C-H скрывается в скелетной формуле
+                        atom.mesh.visible = false;
+                        if (atom.labelSprite) atom.labelSprite.visible = false;
+                        if (atom.flatSprite) atom.flatSprite.visible = false;
+                    } else if (isCarbonInChain) {
+                        // Углерод в скелетной формуле превращается в аккуратный узел-уголок без буквы C
+                        atom.mesh.visible = true;
+                        atom.mesh.scale.setScalar(0.16);
+                        if (atom.labelSprite) atom.labelSprite.visible = false;
+                        if (atom.flatSprite) atom.flatSprite.visible = false;
+                    } else {
+                        // Гетероатомы (O, N, S, Cl, He, Fr и др.) превращаются в плоские 2D-буквы на месте атома
+                        atom.mesh.visible = false;
+                        if (atom.labelSprite) atom.labelSprite.visible = false;
+                        if (atom.flatSprite) {
+                            atom.flatSprite.position.copy(atom.mesh.position);
+                            atom.flatSprite.visible = true;
+                        }
+                    }
+                } else {
+                    // Стандартный 3D режим
+                    atom.mesh.visible = true;
+                    atom.mesh.scale.setScalar(1.0);
+                    if (atom.flatSprite) atom.flatSprite.visible = false;
+                    if (atom.labelSprite) {
+                        atom.labelSprite.position.set(
+                            atom.mesh.position.x,
+                            atom.mesh.position.y + (atom.mesh.userData.baseRadius || 0.6) + 0.45,
+                            atom.mesh.position.z
+                        );
+                        atom.labelSprite.visible = showAtomLabels;
+                    }
+                }
+            });
+
+            // Скрываем связи C-H в скелетном режиме
+            builderBonds.forEach(b => {
+                if (skeletal2DMode) {
+                    const isCHBond = (b.atom1.element === 'H' && b.atom2.element === 'C') ||
+                                     (b.atom2.element === 'H' && b.atom1.element === 'C');
+                    b.mesh.visible = !isCHBond;
+                } else {
+                    b.mesh.visible = true;
+                }
+            });
+        }
 
         // СПЕЦИАЛЬНАЯ ФУНКЦИЯ БЫСТРОГО ВЗАИМОДЕЙСТВИЯ: "СОСЕДИ" (ГЕЛИЙ С ФРАНЦИЕМ)
         function spawnNeighborsHeFr() {
@@ -1184,13 +1610,92 @@
             launchConfettiSalute();
         }
 
+        // СТАРТОВАЯ КОМПОЗИЦИЯ: НАСТОЯЩАЯ ОРГАНИЧЕСКАЯ МОЛЕКУЛА СЕРОТОНИНА (C10H12N2O) + БУКВЫ "К М" ИЗ АТОМОВ + БАННЕР
+        function loadBirthdayDedication() {
+            clearBuilderScene();
+
+            // 1. Настоящая 3D-структура Серотонина (5-гидрокситриптамин, C10H12N2O — гормон счастья и вдохновения) в центре сцены
+            const serotoninAtoms = [
+                { el: 'C', x: -1.80, y: 1.50, z: 0.00 }, // 0: C4 (Indole six-ring)
+                { el: 'C', x: -3.10, y: 1.00, z: 0.00 }, // 1: C5 (with OH)
+                { el: 'C', x: -3.35, y: -0.38, z: 0.00 }, // 2: C6
+                { el: 'C', x: -2.30, y: -1.30, z: 0.00 }, // 3: C7
+                { el: 'C', x: -1.00, y: -0.80, z: 0.00 }, // 4: C8 (bridge)
+                { el: 'C', x: -0.75, y: 0.58, z: 0.00 },  // 5: C9 (bridge)
+                { el: 'N', x: 0.18, y: -1.52, z: 0.00 },  // 6: N1 (Indole NH)
+                { el: 'C', x: 1.18, y: -0.60, z: 0.00 },  // 7: C2
+                { el: 'C', x: 0.68, y: 0.70, z: 0.00 },   // 8: C3
+                { el: 'O', x: -4.15, y: 1.90, z: 0.00 },  // 9: O (5-OH phenolic oxygen)
+                { el: 'C', x: 1.55, y: 1.92, z: 0.25 },   // 10: C10 (ethyl chain CH2)
+                { el: 'C', x: 2.98, y: 1.65, z: -0.20 },  // 11: C11 (ethyl chain CH2)
+                { el: 'N', x: 3.85, y: 2.82, z: 0.05 },   // 12: N12 (primary amine NH2)
+                // Ключевые полярные водороды (O-H, N-H, NH2)
+                { el: 'H', x: -4.98, y: 1.42, z: 0.00 },  // 13: H on O9
+                { el: 'H', x: 0.28, y: -2.52, z: 0.00 },  // 14: H on N6
+                { el: 'H', x: 4.80, y: 2.62, z: -0.22 },  // 15: H on N12
+                { el: 'H', x: 3.55, y: 3.68, z: -0.38 }   // 16: H on N12
+            ];
+
+            const serotoninBonds = [
+                [0, 1, 2], [1, 2, 1], [2, 3, 2], [3, 4, 1], [4, 5, 2], [5, 0, 1], // Бензольное кольцо индола
+                [4, 6, 1], [6, 7, 1], [7, 8, 2], [8, 5, 1], // Пиррольное кольцо индола
+                [1, 9, 1], [9, 13, 1], // Фенольный гидроксил -OH
+                [6, 14, 1], // Индольный N-H
+                [8, 10, 1], [10, 11, 1], [11, 12, 1], // Боковая аминоэтильная цепь
+                [12, 15, 1], [12, 16, 1] // Аминогруппа -NH2
+            ];
+
+            const createdSerotonin = serotoninAtoms.map(a => addBuilderAtom(a.el, a.x, a.y + 0.8, a.z));
+            serotoninBonds.forEach(b => addBuilderBond(createdSerotonin[b[0]], createdSerotonin[b[1]], b[2]));
+
+            // 2. Слева и справа выкладываем из органических цепей (C, N, O) инициалы "К" и "М" (Кирилл Михайлович)
+            // Буква "К" слева (x около -8..-5.5)
+            const kAtoms = [
+                addBuilderAtom('N', -8.0, 3.8, 0),
+                addBuilderAtom('C', -8.0, 2.3, 0),
+                addBuilderAtom('C', -8.0, 0.8, 0),
+                addBuilderAtom('O', -6.0, 3.8, 0),
+                addBuilderAtom('C', -6.0, 0.8, 0)
+            ];
+            addBuilderBond(kAtoms[0], kAtoms[1], 2);
+            addBuilderBond(kAtoms[1], kAtoms[2], 1);
+            addBuilderBond(kAtoms[1], kAtoms[3], 1);
+            addBuilderBond(kAtoms[1], kAtoms[4], 2);
+
+            // Буква "М" справа (x около 6..9.5)
+            const mAtoms = [
+                addBuilderAtom('C', 6.0, 0.8, 0),
+                addBuilderAtom('N', 6.0, 3.8, 0),
+                addBuilderAtom('C', 7.6, 2.0, 0),
+                addBuilderAtom('N', 9.2, 3.8, 0),
+                addBuilderAtom('O', 9.2, 0.8, 0)
+            ];
+            addBuilderBond(mAtoms[0], mAtoms[1], 2);
+            addBuilderBond(mAtoms[1], mAtoms[2], 1);
+            addBuilderBond(mAtoms[2], mAtoms[3], 2);
+            addBuilderBond(mAtoms[3], mAtoms[4], 1);
+
+            // 3. Создаем парящий 3D-баннер над сценой
+            createDedication3DBanner(
+                "🎂 КИРИЛЛ МИХАЙЛОВИЧ — ЛУЧШИЙ ПРЕПОДАВАТЕЛЬ ХИМИИ! 🎉",
+                "Органический комплекс вдохновения: Серотонин (C₁₀H₁₂N₂O) + Молекулярные инициалы К.М."
+            );
+
+            builderCamera.position.set(0, 4.5, 19);
+            builderControls.target.set(0, 2.2, 0);
+            builderControls.update();
+
+            const hud = document.getElementById("builderHud");
+            if (hud) hud.innerText = "🎂 Кирилл Михайлович — лучший преподаватель химии! | На сцене: Серотонин (C10H12N2O)";
+        }
+
         function initMolecularBuilder() {
             const container = document.getElementById("builder-canvas-container");
             builderScene = new THREE.Scene();
             builderScene.background = new THREE.Color(0x151515);
 
             builderCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            builderCamera.position.set(0, 8, 14);
+            builderCamera.position.set(0, 8, 16);
 
             builderRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
             builderRenderer.setSize(container.clientWidth, container.clientHeight);
@@ -1239,6 +1744,7 @@
                         const delta = gizmoPivot.position.clone().sub(previousPivotPos);
                         selectedAtomsOrder.forEach(atom => {
                             atom.mesh.position.add(delta);
+                            syncAtomSpritesPosition(atom);
                             updateBondsForAtom(atom);
                         });
                         previousPivotPos.copy(gizmoPivot.position);
@@ -1248,6 +1754,7 @@
                             const rel = atom.mesh.position.clone().sub(gizmoPivot.position);
                             rel.applyQuaternion(deltaQuat);
                             atom.mesh.position.copy(gizmoPivot.position).add(rel);
+                            syncAtomSpritesPosition(atom);
                             updateBondsForAtom(atom);
                         });
                         previousPivotQuat.copy(gizmoPivot.quaternion);
@@ -1307,6 +1814,19 @@
             builderAnimate();
             updateBuilderHud();
             updateGeometricMeasurement();
+        }
+
+        function syncAtomSpritesPosition(atom) {
+            if (atom.labelSprite) {
+                atom.labelSprite.position.set(
+                    atom.mesh.position.x,
+                    atom.mesh.position.y + (atom.mesh.userData.baseRadius || 0.6) + 0.45,
+                    atom.mesh.position.z
+                );
+            }
+            if (atom.flatSprite) {
+                atom.flatSprite.position.copy(atom.mesh.position);
+            }
         }
 
         function clearMeasureLines() {
@@ -1616,7 +2136,7 @@
         }
 
         function updateGridSize(newSize) {
-            if (isNaN(newSize) || newSize < 5) newSize = 30;
+            if (isNaN(newSize) || newSize < 5) newSize = 40;
             currentGridSize = newSize;
             buildWorkspaceFloor(currentGridSize);
             updateBuilderHud();
@@ -1675,16 +2195,24 @@
 
             if (transformControls.dragging || (transformControls.axis !== null && transformControls.axis !== undefined)) return;
 
-            const atomMeshes = builderAtoms.map(a => a.mesh);
-            const hits = getBuilderIntersects(event.clientX, event.clientY, atomMeshes);
+            const pickables = [];
+            builderAtoms.forEach(a => {
+                pickables.push(a.mesh);
+                if (skeletal2DMode && a.flatSprite && a.flatSprite.visible) pickables.push(a.flatSprite);
+            });
+            const hits = getBuilderIntersects(event.clientX, event.clientY, pickables);
+
+            const findAtomFromHit = (obj) => builderAtoms.find(a => a.mesh === obj || a.flatSprite === obj);
 
             if (builderTool === 'add') {
                 if (hits.length > 0) {
-                    const hitAtom = builderAtoms.find(a => a.mesh === hits[0].object);
-                    const norm = hits[0].face.normal.clone().multiplyScalar(1.5);
-                    const pos = hitAtom.mesh.position.clone().add(norm);
-                    const newAtom = addBuilderAtom(selectedElement, pos.x, pos.y, pos.z);
-                    addBuilderBond(hitAtom, newAtom, selectedBondOrder);
+                    const hitAtom = findAtomFromHit(hits[0].object);
+                    if (hitAtom) {
+                        const norm = hits[0].face ? hits[0].face.normal.clone().multiplyScalar(1.5) : new THREE.Vector3(1.4, 0, 0);
+                        const pos = hitAtom.mesh.position.clone().add(norm);
+                        const newAtom = addBuilderAtom(selectedElement, pos.x, pos.y, pos.z);
+                        addBuilderBond(hitAtom, newAtom, selectedBondOrder);
+                    }
                 } else {
                     const groundHits = getBuilderIntersects(event.clientX, event.clientY, [groundPlaneMesh]);
                     if (groundHits.length > 0) {
@@ -1698,14 +2226,16 @@
 
             if (builderTool === 'bond') {
                 if (hits.length > 0) {
-                    const targetAtom = builderAtoms.find(a => a.mesh === hits[0].object);
-                    if (selectedAtomsOrder.length > 0) {
-                        selectedAtomsOrder.forEach(srcAtom => {
-                            if (srcAtom !== targetAtom) addBuilderBond(srcAtom, targetAtom, selectedBondOrder);
-                        });
-                        clearSelection();
-                    } else {
-                        selectAtom(targetAtom, false);
+                    const targetAtom = findAtomFromHit(hits[0].object);
+                    if (targetAtom) {
+                        if (selectedAtomsOrder.length > 0) {
+                            selectedAtomsOrder.forEach(srcAtom => {
+                                if (srcAtom !== targetAtom) addBuilderBond(srcAtom, targetAtom, selectedBondOrder);
+                            });
+                            clearSelection();
+                        } else {
+                            selectAtom(targetAtom, false);
+                        }
                     }
                 }
                 return;
@@ -1713,7 +2243,8 @@
 
             if (builderTool === 'select') {
                 if (hits.length > 0) {
-                    const clickedAtom = builderAtoms.find(a => a.mesh === hits[0].object);
+                    const clickedAtom = findAtomFromHit(hits[0].object);
+                    if (!clickedAtom) return;
 
                     if (!event.shiftKey) {
                         clearSelection();
@@ -1833,10 +2364,28 @@
         }
 
         function addBuilderAtom(element, x, y, z) {
-            const mesh = createAtomMesh(element, x, y, z);
+            const key = element ? (element.charAt(0).toUpperCase() + element.slice(1).toLowerCase()) : 'C';
+            const colorHex = CPK_COLORS[key] || CPK_COLORS[element] || 0xC8C8C8;
+            const mesh = createAtomMesh(key, x, y, z);
             builderScene.add(mesh);
-            const atomObj = { id: Date.now() + Math.random(), element: element, mesh: mesh };
+
+            // 1. Следящая за камерой надпись над атомом
+            const labelSprite = createAtomBillboardSprite(key, colorHex, false);
+            labelSprite.scale.set(0.85, 0.85, 1);
+            labelSprite.position.set(x, y + (mesh.userData.baseRadius || 0.6) + 0.45, z);
+            labelSprite.visible = showAtomLabels && !skeletal2DMode;
+            builderScene.add(labelSprite);
+
+            // 2. Плоский 2D-спрайт для скелетного 3D-режима
+            const flatSprite = createAtomBillboardSprite(key, colorHex, true);
+            flatSprite.scale.set(1.05, 1.05, 1);
+            flatSprite.position.set(x, y, z);
+            flatSprite.visible = false;
+            builderScene.add(flatSprite);
+
+            const atomObj = { id: Date.now() + Math.random(), element: key, mesh: mesh, labelSprite: labelSprite, flatSprite: flatSprite };
             builderAtoms.push(atomObj);
+            refreshSceneVisualMode();
             updateBuilderHud();
             updateGeometricMeasurement();
             return atomObj;
@@ -1849,17 +2398,20 @@
                 builderScene.remove(exists.mesh);
                 exists.mesh = createBondMesh(atom1.mesh.position, atom2.mesh.position, order);
                 builderScene.add(exists.mesh);
+                refreshSceneVisualMode();
                 return;
             }
             const bondMesh = createBondMesh(atom1.mesh.position, atom2.mesh.position, order);
             builderScene.add(bondMesh);
             builderBonds.push({ atom1, atom2, order, mesh: bondMesh });
+            refreshSceneVisualMode();
             updateBuilderHud();
         }
 
         function removeBuilderBond(bondObj) {
             builderScene.remove(bondObj.mesh);
             builderBonds = builderBonds.filter(b => b !== bondObj);
+            refreshSceneVisualMode();
             updateBuilderHud();
         }
 
@@ -1871,6 +2423,7 @@
                     builderScene.add(b.mesh);
                 }
             });
+            refreshSceneVisualMode();
         }
 
         function deleteSelectedAtoms() {
@@ -1878,16 +2431,27 @@
                 const connectedBonds = builderBonds.filter(b => b.atom1 === atom || b.atom2 === atom);
                 connectedBonds.forEach(b => removeBuilderBond(b));
                 builderScene.remove(atom.mesh);
+                if (atom.labelSprite) builderScene.remove(atom.labelSprite);
+                if (atom.flatSprite) builderScene.remove(atom.flatSprite);
                 builderAtoms = builderAtoms.filter(a => a !== atom);
             });
             clearSelection();
+            refreshSceneVisualMode();
             updateBuilderHud();
             updateGeometricMeasurement();
         }
 
         function clearBuilderScene() {
             clearSelection();
-            builderAtoms.forEach(a => builderScene.remove(a.mesh));
+            if (dedicationBannerSprite) {
+                builderScene.remove(dedicationBannerSprite);
+                dedicationBannerSprite = null;
+            }
+            builderAtoms.forEach(a => {
+                builderScene.remove(a.mesh);
+                if (a.labelSprite) builderScene.remove(a.labelSprite);
+                if (a.flatSprite) builderScene.remove(a.flatSprite);
+            });
             builderBonds.forEach(b => builderScene.remove(b.mesh));
             builderAtoms = [];
             builderBonds = [];
@@ -1898,15 +2462,61 @@
             updateBuilderHud();
         }
 
+        // КЛИЕНТСКИЙ FALLBACK АВТО-СВЯЗЫВАНИЯ (РАБОТАЕТ ДАЖЕ БЕЗ PYTHON СЕРВЕРА!)
+        function clientSideAutoBondFallback() {
+            const maxValence = { 'H': 1, 'He': 1, 'Li': 1, 'Be': 2, 'B': 3, 'C': 4, 'N': 4, 'O': 2, 'F': 1, 'Na': 1, 'Cl': 1, 'Br': 1, 'I': 1, 'Fr': 1 };
+            const getDegree = (atom) => builderBonds.filter(b => b.atom1 === atom || b.atom2 === atom).length;
+
+            const pairs = [];
+            for (let i = 0; i < builderAtoms.length; i++) {
+                for (let j = i + 1; j < builderAtoms.length; j++) {
+                    const d = builderAtoms[i].mesh.position.distanceTo(builderAtoms[j].mesh.position);
+                    pairs.push({ d, a1: builderAtoms[i], a2: builderAtoms[j] });
+                }
+            }
+            pairs.sort((x, y) => x.d - y.d);
+
+            // 1. Соединяем близкие атомы (до 2.4 Å)
+            pairs.forEach(p => {
+                if (p.d <= 2.4) {
+                    const mv1 = maxValence[p.a1.element] || 6;
+                    const mv2 = maxValence[p.a2.element] || 6;
+                    if (getDegree(p.a1) < mv1 && getDegree(p.a2) < mv2) {
+                        addBuilderBond(p.a1, p.a2, 1);
+                    }
+                }
+            });
+
+            // 2. Если остались одиночные атомы без связей, соединяем их с ближайшим соседом
+            pairs.forEach(p => {
+                if (p.d <= 8.5) {
+                    const deg1 = getDegree(p.a1);
+                    const deg2 = getDegree(p.a2);
+                    const mv1 = maxValence[p.a1.element] || 6;
+                    const mv2 = maxValence[p.a2.element] || 6;
+                    if ((deg1 === 0 || deg2 === 0) && deg1 < mv1 && deg2 < mv2) {
+                        addBuilderBond(p.a1, p.a2, 1);
+                    }
+                }
+            });
+        }
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ АВТО-СВЯЗЕЙ И ИЗОМЕРОВ
         async function autoBondStructure() {
-            if (builderAtoms.length === 0) return;
+            if (builderAtoms.length < 2) {
+                alert(currentLang === 'ru' ? "Добавьте хотя бы 2 атома на сцену!" : "Place at least 2 atoms first!");
+                return;
+            }
+
+            // Сначала мгновенно соединяем несвязанные атомы на сцене по расстоянию и валентности
+            clientSideAutoBondFallback();
 
             const sdf = exportBuilderToSDFText();
             const elements = builderAtoms.map(a => a.element);
             const has_bonds = builderBonds.length > 0;
 
             const hud = document.getElementById("builderHud");
-            hud.innerText = "⚡ Solving chemical isomers & calculating true 3D geometry...";
+            hud.innerText = currentLang === 'ru' ? "⚡ Формирование связей и поиск изомеров..." : "⚡ Solving chemical bonds & isomers...";
 
             try {
                 const res = await fetch('http://127.0.0.1:5000/api/auto_bond', {
@@ -1916,8 +2526,8 @@
                 });
 
                 if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.error || "Auto-Bond failed.");
+                    updateBuilderHud();
+                    return;
                 }
 
                 const data = await res.json();
@@ -1933,8 +2543,8 @@
                     } else nextBtn.style.display = 'none';
                 }
             } catch(e) {
-                alert("Auto-Bond Error: " + e.message);
-                updateBuilderHud();
+                // Если сервер Python не запущен, клиентские связи уже построены!
+                hud.innerText = currentLang === 'ru' ? "✅ Связи сформированы автоматически по 3D-координатам!" : "✅ Bonds formed automatically via 3D proximity!";
             }
         }
 
@@ -1950,7 +2560,7 @@
             if (!isomer || !isomer.sdf) return;
             loadSDFIntoBuilder(isomer.sdf, false);
             const hud = document.getElementById("builderHud");
-            hud.innerText = `Configuration: ${isomer.name} (${isomer.smiles})`;
+            hud.innerText = `Конфигурация [${idx + 1}/${cachedIsomers.length}]: ${isomer.name} (${isomer.smiles})`;
         }
 
         function exportBuilderToSDFText() {
@@ -1960,7 +2570,7 @@
             const pad = (num, size) => (num + "").padStart(size, " ");
             const padCoord = (val) => val.toFixed(4).padStart(10, " ");
 
-            let out = "GeneratedByAceBuilder\n  ACE_3D    00000000002D\n\n";
+            let out = "GeneratedByAceBuilder\n  ACE_3D    00000000003D\n\n";
             out += pad(numAtoms, 3) + pad(numBonds, 3) + "  0  0  0  0  0  0  0  0999 V2000\n";
             
             for (let i = 0; i < numAtoms; i++) {
@@ -2021,6 +2631,7 @@
                         }
                     }
                 }
+                refreshSceneVisualMode();
                 updateGeometricMeasurement();
                 return;
             }
@@ -2060,6 +2671,7 @@
                     addBuilderBond(importedAtoms[a1], importedAtoms[a2], order);
                 }
             }
+            refreshSceneVisualMode();
             updateGeometricMeasurement();
         }
 
@@ -2078,7 +2690,6 @@
             const panel = document.getElementById("builderAnalysisPanel");
             panel.style.display = "block";
 
-            // Специальная пасхалка при анализе молекулы "Соседи" (He—Fr)
             const elems = builderAtoms.map(a => a.element).sort().join('');
             if (elems === 'FrHe' && builderBonds.length >= 1) {
                 document.getElementById("builderOutSmiles").innerText = "[He]-[Fr]";
@@ -2086,8 +2697,8 @@
                 document.getElementById("builderOutFormula").innerText = "HeFr";
                 document.getElementById("builderOutWeight").innerText = "227.023";
                 document.getElementById("builderOutWiki").innerHTML = currentLang === 'ru'
-                    ? "<b>Эксклюзивное соединение «Соседи» (He—Fr):</b> Союз самого инертного благородного газа Гелия (№2) и самого активного щелочного металла Франция (№87) — соседей по таблице при переходе между периодами! Поздравляем Кирилла Михайловича с Днём Рождения! 🎉"
-                    : "<b>Exclusive 'Neighbors' Complex (He—Fr):</b> A theoretical union of the noblest gas Helium (#2) and the most reactive alkali metal Francium (#87)! Happy Birthday, Kirill Mikhailovich! 🎉";
+                    ? "<b>Эксклюзивное соединение «Соседи» (He—Fr):</b> Союз самого инертного благородного газа Гелия (№2) и самого активного щелочного металла Франция (№87)! С Днём Рождения, Кирилл Михайлович! 🎉"
+                    : "<b>Exclusive 'Neighbors' Complex (He—Fr):</b> A theoretical union of Helium (#2) and Francium (#87)! Happy Birthday, Kirill Mikhailovich! 🎉";
                 launchConfettiSalute();
                 return;
             }
@@ -2118,8 +2729,8 @@
                     document.getElementById("builderOutName").innerText = pubChemData.IUPACName;
                     fetchWikiForBuilder(pubChemData.IUPACName);
                 } else {
-                    document.getElementById("builderOutName").innerText = currentLang === 'ru' ? "Новое / Кастомное соединение" : "Novel / Custom Structure";
-                    document.getElementById("builderOutWiki").innerText = currentLang === 'ru' ? "Этот структурный изомер отсутствует в стандартных справочниках Википедии." : "This exact structural isomer is not listed in standard Wikipedia references.";
+                    document.getElementById("builderOutName").innerText = currentLang === 'ru' ? "Кастомный органический комплекс" : "Novel / Custom Structure";
+                    document.getElementById("builderOutWiki").innerText = currentLang === 'ru' ? "Этот структурный ансамбль уникален (или включает несколько молекул на сцене)." : "This structural ensemble is custom.";
                 }
             } catch (e) {
                 document.getElementById("builderOutSmiles").innerText = "Error: Ensure Python server is online (http://127.0.0.1:5000)";
