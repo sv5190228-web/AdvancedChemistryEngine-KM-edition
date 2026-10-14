@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Chemistry Engine — Kirill Mikhailovich Special Edition</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.5/3Dmol-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root[data-theme="dark"] {
+            --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0;
+            --text-muted: #a0a0a0; --border-color: #333333; --accent-color: #00E5FF; 
+            --accent-hover: #00b3cc; --input-bg: #2d2d2d; --2d-map-bg: #ffffff; --wiki-bg: #2a2a2a;
+            --gold-color: #FFD700;
+        }
+        :root[data-theme="light"] {
+            --bg-color: #f4f6f9; --card-bg: #ffffff; --text-color: #333333;
+            --text-muted: #666666; --border-color: #e9ecef; --accent-color: #007bff;
+            --accent-hover: #0056b3; --input-bg: #ffffff; --2d-map-bg: #ffffff; --wiki-bg: #f8f9fa;
+            --gold-color: #d4af37;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; user-select: none; }
+        .header { text-align: center; margin-bottom: 20px; position: relative; padding-top: 10px; }
+        
+        .top-controls { position: absolute; top: 0; right: 20px; display: flex; gap: 8px; align-items: center; }
+        .top-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .top-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .festive-btn { border-color: var(--gold-color); color: var(--gold-color); box-shadow: 0 0 10px rgba(255, 215, 0, 0.25); }
+        .festive-btn:hover { background: var(--gold-color); color: #000; }
+
+        /* FESTIVE BANNER */
+        .birthday-banner {
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(0,229,255,0.15), rgba(156,39,176,0.2));
+            border: 2px solid var(--gold-color);
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+        }
+        .birthday-banner h2 { margin: 0 0 4px 0; color: var(--gold-color); font-size: 20px; }
+        .birthday-banner p { margin: 0; font-size: 14px; color: var(--text-color); }
+
+        .search-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        input[type="text"] { padding: 12px 16px; font-size: 16px; width: 450px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
+        input[type="text"]:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2); }
+        button.primary-btn { padding: 12px 24px; font-size: 15px; font-weight: bold; background-color: var(--accent-color); color: #000; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        button.primary-btn:hover { background-color: var(--accent-hover); }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 20px auto 0 auto; }
+        .card { background: var(--card-bg); padding: 24px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .info-panel p { margin: 10px 0; font-size: 15px; }
+        .info-panel strong { color: var(--accent-color); }
+        
+        .wiki-box { background-color: var(--wiki-bg); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 15px 0; font-size: 14px; line-height: 1.5; color: var(--text-color); }
+        .smiles-box { background-color: var(--wiki-bg); padding: 10px; border-radius: 6px; font-family: Consolas, monospace; word-break: break-all; border: 1px solid var(--border-color); margin-top: 5px; color: var(--accent-color); }
+        .copy-btn { background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; cursor: pointer; font-size: 12px; padding: 2px 8px; margin-left: 10px; }
+        .copy-btn:hover { background: var(--accent-color); color: #000; }
+        #viewer3d { width: 100%; height: 400px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 12px; position: relative; }
+        
+        .map-2d-container { width: 100%; height: 250px; display: flex; align-items: center; justify-content: center; background-color: var(--2d-map-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 10px; padding: 10px; box-sizing: border-box; overflow: hidden; cursor: crosshair; }
+        #img2d { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.15s ease-out; transform-origin: center center; }
+        .map-2d-container:hover #img2d { transform: scale(2.5); }
+        
+        .status-msg { text-align: center; font-weight: bold; min-height: 24px; font-size: 14px; color: var(--accent-color); }
+
+        .controls-panel { background: var(--wiki-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px; }
+        .sliders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .slider-group { display: flex; flex-direction: column; gap: 5px; }
+        .slider-group label { font-size: 13px; font-weight: bold; color: var(--text-color); display: flex; justify-content: space-between; }
+        .slider-group input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent-color); }
+        .slider-group span { color: var(--accent-color); }
+        .master-slider { grid-column: 1 / -1; background: var(--input-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; }
+        
+        .smiles-toggle { background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-color); display: inline-block; cursor: pointer; font-weight: bold; }
+
+        /* BUILDER WORKBENCH STYLING */
+        .builder-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+        .tool-btn { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .tool-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .tool-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+        .preset-badge { background: var(--card-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; transition: 0.2s; }
+        .preset-badge:hover { border-color: var(--accent-color); color: var(--accent-color); transform: translateY(-1px); }
+        .neighbors-badge { background: linear-gradient(135deg, #420066, #007a8c); border: 1.5px solid var(--gold-color) !important; color: #fff !important; font-weight: bold; box-shadow: 0 0 12px rgba(255, 215, 0, 0.35); }
+        .neighbors-badge:hover { transform: scale(1.06); box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
+        .preset-del { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 4px; }
+        .hud-overlay { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); padding: 10px 16px; border-radius: 8px; font-size: 13px; border: 1px solid #444; pointer-events: none; z-index: 10; color: #fff; line-height: 1.4; }
+        
+        #selection-box { position: absolute; border: 1.5px dashed var(--accent-color); background: rgba(0, 229, 255, 0.15); pointer-events: none; display: none; z-index: 15; }
+
+        .hotbar-elem-btn { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .hotbar-elem-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
+        .hotbar-elem-del { font-size: 11px; color: #888; margin-left: 3px; cursor: pointer; }
+        .hotbar-elem-del:hover { color: #ff5252; }
+
+        #periodic-modal, #birthday-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
+        .ptable-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; max-width: 1280px; width: 95vw; max-height: 90vh; overflow: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative; }
+        .ptable-grid { display: grid; grid-template-columns: repeat(18, minmax(45px, 1fr)); gap: 4px; margin-top: 15px; }
+        .pt-cell { border: 1px solid var(--border-color); padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; cursor: pointer; transition: transform 0.1s, border-color 0.1s; background: var(--input-bg); color: var(--text-color); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 48px; }
+        .pt-cell:hover { transform: scale(1.15); z-index: 10; border-color: var(--accent-color); box-shadow: 0 0 8px rgba(0,229,255,0.5); }
+        .pt-num { font-size: 9px; opacity: 0.6; }
+        .pt-sym { font-size: 14px; font-weight: bold; }
+
+        .birthday-card-modal { background: var(--card-bg); border: 2px solid var(--gold-color); border-radius: 16px; padding: 32px; max-width: 580px; width: 90vw; text-align: center; box-shadow: 0 0 40px rgba(255, 215, 0, 0.3); }
+        .measure-badge { position: absolute; bottom: 14px; right: 14px; background: rgba(0, 229, 255, 0.15); border: 1.5px solid var(--accent-color); backdrop-filter: blur(8px); padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: bold; color: var(--accent-color); z-index: 10; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- BIRTHDAY BANNER -->
+    <div class="birthday-banner">
+        <div>
+            <h2 id="i18n-bday-banner-title">🎂 Special Edition: С Днём Рождения, Кирилл Михайлович Ляпишев! 🎉</h2>
+            <p id="i18n-bday-banner-sub">Эксклюзивная сборка химического движка в честь лучшего учителя химии! Пусть каждая реакция идет со 100% выходом!</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="top-btn festive-btn" onclick="launchConfettiSalute()" id="i18n-btn-salute">🎆 Салют!</button>
+            <button class="top-btn festive-btn" onclick="openBirthdayModal()" id="i18n-btn-card">🎁 Открытка</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1 id="i18n-app-title">Advanced Chemistry Engine <span style="font-size: 16px; color: var(--gold-color); vertical-align: middle;">★ K.M. Lyapishev Edition</span></h1>
+        <p id="i18n-app-subtitle" style="color: var(--text-muted)">Ищите любые соединения, переводите названия автоматически и изучайте 3D-структуры.</p>
+        
+        <div class="top-controls">
+            <button class="top-btn" id="langToggleBtn" onclick="toggleLanguage()">🇷🇺 RU / 🇬🇧 EN</button>
+            <button class="top-btn theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">☀️ Светлая тема</button>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="например: 'соляная кислота', 'H2O' или 'CCO'">
+        <button class="primary-btn" id="i18n-btn-analyze" onclick="processSearch()">Анализировать</button>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 15px;">
+        <label class="smiles-toggle" style="font-size: 12px; padding: 6px 12px;">
+            <input type="checkbox" id="forceSmilesTop" style="accent-color: var(--accent-color);"> <span id="i18n-force-smiles-top">🧬 Строгий режим SMILES (Сервер Python)</span>
+        </label>
+    </div>
+    <div id="statusMsg" class="status-msg"></div>
+
+    <div class="grid">
+        <div class="card info-panel">
+            <h3 style="margin-top:0;" id="i18n-card-details">Сведения о веществе</h3>
+            <p><strong id="i18n-lbl-name">Название (IUPAC):</strong> <span id="outName">-</span></p>
+            <p><strong id="i18n-lbl-formula">Молекулярная формула:</strong> <span id="outFormula">-</span></p>
+            <p><strong id="i18n-lbl-weight">Молярная масса:</strong> <span id="outWeight">-</span> g/mol</p>
+            <div><strong>SMILES:</strong> <button class="copy-btn" onclick="copySmiles()" id="i18n-btn-copy1">Копировать</button><div id="outSmiles" class="smiles-box">-</div></div>
+            <div class="wiki-box" id="wikiExtract">Здесь появятся факты из Википедии и история открытия вещества.</div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <h3 id="i18n-lbl-2dmap">2D Структурная карта (Наведите для зума)</h3>
+            <div class="map-2d-container" onmousemove="zoomMap(event)">
+                <img id="img2d" alt="2D Structure">
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;" id="i18n-lbl-3dmodel">Интерактивная 3D-модель</h3>
+                <label style="cursor: pointer; font-weight: bold; font-size: 14px;">
+                    <input type="checkbox" id="show-h-toggle" checked onchange="apply3DStyle()"> <span id="i18n-lbl-showh">Показывать водород (H)</span>
+                </label>
+            </div>
+            <div id="viewer3d"></div>
+        </div>
+
+        <!-- SWARM ENGINE -->
+        <div class="card" style="grid-column: 1 / -1; border-top: 4px solid var(--accent-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin-top:0; margin-bottom: 0;" id="i18n-swarm-title">🎬 Аниматор реакций True-Time Swarm</h3>
+                <label class="smiles-toggle">
+                    <input type="checkbox" id="forceSmiles" style="accent-color: var(--accent-color);"> <span id="i18n-force-smiles-swarm">🧬 Строгий SMILES (Python)</span>
+                </label>
+            </div>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 5px;" id="i18n-swarm-desc">Введите коэффициенты, SMILES или формулы. <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong></p>
+            
+            <div style="display: flex; gap: 15px; align-items: center; justify-content: center; margin-top: 15px;">
+                <input type="text" id="r1" placeholder="Реагент 1 (напр. C=C)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <span style="font-weight: bold;">+</span>
+                <input type="text" id="r2" placeholder="Реагент 2 (напр. H2)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <span style="font-weight: bold; font-size: 20px; color: var(--accent-color);">➔</span>
+                <input type="text" id="p1" placeholder="Продукт 1" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <span style="font-weight: bold;">+</span>
+                <input type="text" id="p2" placeholder="Продукт 2 (опц.)" style="width: 150px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+            </div>
+
+            <div class="controls-panel">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--accent-color);" id="i18n-swarm-cfg">⚙️ Настройки времени и вращения</h4>
+                
+                <div class="sliders-grid">
+                    <div class="slider-group master-slider">
+                        <label style="font-size: 15px;"><span id="i18n-sl-dur">⏳ Длительность анимации (сек)</span> <span id="valDuration" style="font-size: 18px;">9</span></label>
+                        <input type="range" id="animDuration" min="3" max="60" step="1" value="9" oninput="document.getElementById('valDuration').innerText=this.value">
+                    </div>
+
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-c1">Скорость орбиты сцены 1</span> <span id="valCam1">1.0</span></label>
+                        <input type="range" id="camSpeed1" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valCam1').innerText=this.value">
+                    </div>
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-c2">Скорость орбиты сцены 2</span> <span id="valCam2">1.0</span></label>
+                        <input type="range" id="camSpeed2" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valCam2').innerText=this.value">
+                    </div>
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-r1">Вращение Реагента 1</span> <span id="valR1">1.0</span></label>
+                        <input type="range" id="spinR1" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valR1').innerText=this.value">
+                    </div>
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-r2">Вращение Реагента 2</span> <span id="valR2">1.0</span></label>
+                        <input type="range" id="spinR2" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valR2').innerText=this.value">
+                    </div>
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-p1">Вращение Продукта 1</span> <span id="valP1">1.0</span></label>
+                        <input type="range" id="spinP1" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valP1').innerText=this.value">
+                    </div>
+                    <div class="slider-group">
+                        <label><span id="i18n-sl-p2">Вращение Продукта 2</span> <span id="valP2">1.0</span></label>
+                        <input type="range" id="spinP2" min="0" max="5" step="0.1" value="1.0" oninput="document.getElementById('valP2').innerText=this.value">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="primary-btn" id="i18n-btn-record" onclick="playProceduralCutscene()" style="background-color: #28a745; color: white; width: 100%;">🎥 Сгенерировать видео реакции (WebM)</button>
+            </div>
+            <div id="animStatus" class="status-msg" style="margin-top: 10px;"></div>
+            
+            <div id="threejs-container" style="width: 100%; height: 400px; background: #1e1e1e; border-radius: 6px; margin-top: 15px; overflow: hidden; display: none;"></div>
+        </div>
+
+        <!-- 3D MOLECULAR WORKBENCH -->
+        <div class="card" style="grid-column: 1 / -1; border-top: 4px solid var(--gold-color); margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 20px;" id="i18n-wb-title">🏗️ 3D Молекулярный Конструктор (Kirill Mikhailovich Pro Suite)</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;" id="i18n-wb-nav">
+                        <strong style="color:var(--accent-color)">Навигация:</strong> [W/A/S/D] Полет | [Q/E] Вниз/Вверх | [Shift] Ускорение | ПКМ = Обзор | СКМ = Панорама | ЛКМ = Выбор | <strong style="color:var(--accent-color)">[R] = Перемещение/Вращение</strong>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="tool-btn" onclick="document.getElementById('cifFileInput').click()" id="i18n-btn-cif">💎 Импорт .CIF / .PDB</button>
+                    <input type="file" id="cifFileInput" accept=".cif,.pdb,.ent" style="display:none;" onchange="handleCrystallographyUpload(event)">
+                    <button class="tool-btn" onclick="document.getElementById('builderFileInput').click()" id="i18n-btn-upsdf">📂 Загрузить .SDF</button>
+                    <input type="file" id="builderFileInput" accept=".sdf,.mol" style="display:none;" onchange="handleBuilderUpload(event)">
+                    <button class="tool-btn" onclick="downloadBuilderSDF()" id="i18n-btn-downsdf">💾 Скачать .SDF</button>
+                    <button class="tool-btn" onclick="export4KTransparentPNG()" style="border-color:#e040fb; color:#e040fb;" id="i18n-btn-4k">📸 4K PNG (Прозрачный)</button>
+                    <button class="tool-btn" onclick="autoBondStructure()" style="background: #28a745; color: #fff; border-color: #28a745;" id="i18n-btn-autobond">⚡ Авто-связи / Изомеры</button>
+                    <button class="tool-btn" id="btn-next-isomer" onclick="cycleNextIsomer()" style="border-color: #ff9800; color: #ff9800; display: none;">🔄 След. изомер (<span id="isomerIndexLabel">1/1</span>)</button>
+                </div>
+            </div>
+
+            <!-- SMILES LOADER TOOLBAR -->
+            <div style="display: flex; gap: 10px; align-items: center; background: var(--wiki-bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+                <span style="font-size: 13px; font-weight: bold; color: var(--accent-color); white-space: nowrap;" id="i18n-smiles-loader-lbl">🧬 Загрузчик SMILES:</span>
+                <input type="text" id="builderSmilesInput" placeholder="Вставьте SMILES для 3D-генерации (напр. CCO, c1ccccc1)..." style="flex: 1; padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <button class="tool-btn" onclick="loadSmilesToWorkspace(false)" id="i18n-btn-replace">📥 Заменить сцену</button>
+                <button class="tool-btn" onclick="loadSmilesToWorkspace(true)" id="i18n-btn-append">➕ Добавить на сцену</button>
+            </div>
+
+            <!-- Action Toolbar (Hotkeys 1, 2, 3, R) -->
+            <div class="builder-toolbar" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <span style="font-size: 13px; font-weight: bold; margin-right: 5px;" id="i18n-lbl-hotkeys">Инструменты:</span>
+                <button class="tool-btn active" id="btn-tool-select" onclick="setBuilderTool('select')">👆 [1] Выбор / Гизмо</button>
+                <button class="tool-btn" id="btn-gizmo-mode" onclick="toggleGizmoMode()" style="border-color: var(--accent-color);">🔄 [R] Режим: Перемещение</button>
+                <button class="tool-btn" id="btn-tool-add" onclick="setBuilderTool('add')">➕ [2] Создать атом</button>
+                <button class="tool-btn" id="btn-tool-bond" onclick="setBuilderTool('bond')">🔗 [3] Связать (Группа ➔ Цель)</button>
+                <button class="tool-btn" onclick="deleteSelectedAtoms()" style="color: #ff5252;" id="i18n-btn-del">🗑️ [Del] Удалить</button>
+                
+                <!-- Floor Size Selector -->
+                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; border-left: 1px solid var(--border-color); padding-left: 10px;">
+                    <span style="font-size: 13px; font-weight: bold;" id="i18n-lbl-floor">📐 Сетка:</span>
+                    <input type="number" id="builderGridSize" min="10" max="300" step="10" value="30" style="width: 55px; padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-weight: bold;" onchange="updateGridSize(parseInt(this.value))">
+                    <span style="font-size: 12px; color: var(--text-muted);">m</span>
+                </div>
+
+                <button class="tool-btn" onclick="clearBuilderScene()" style="color: #ff5252; margin-left: auto;" id="i18n-btn-clear">🧹 Очистить сцену</button>
+            </div>
+
+            <!-- Smart Chemistry Controls: Hydrogens & Electrostatics -->
+            <div class="builder-toolbar" style="background: var(--input-bg); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <span style="font-size: 13px; font-weight: bold; color: var(--accent-color);" id="i18n-lbl-smartchem">🧪 Управление водородом и зарядами:</span>
+                <button class="tool-btn" onclick="manageHydrogens('add')" id="i18n-btn-h-add">➕ Добавить H</button>
+                <button class="tool-btn" onclick="manageHydrogens('strip_nonpolar')" id="i18n-btn-h-nonpolar">🧹 Убрать неполярные H (C-H)</button>
+                <button class="tool-btn" onclick="manageHydrogens('strip_polar')" id="i18n-btn-h-polar">💧 Убрать полярные H (O-H, N-H)</button>
+                <button class="tool-btn" onclick="manageHydrogens('strip_all')" id="i18n-btn-h-all">❌ Убрать все H</button>
+                <button class="tool-btn" id="btn-charges-toggle" onclick="toggleGasteigerCharges()" style="border-color: #ff8000; color: #ff8000;">⚡ Заряды по Гастейгеру (RWB)</button>
+                <label style="cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; margin-left: auto;">
+                    <input type="checkbox" id="stripSolventToggle" checked style="accent-color: var(--accent-color);"> <span id="i18n-lbl-stripsolv">Удалять растворители</span>
+                </label>
+            </div>
+
+            <!-- Bond Order Selector Bar -->
+            <div class="builder-toolbar">
+                <span style="font-size: 13px; font-weight: bold; margin-right: 5px;" id="i18n-lbl-bondorder">Кратность связи:</span>
+                <button class="tool-btn active" id="btn-bond-1" onclick="setBuilderBondOrder(1)">Одинарная (—)</button>
+                <button class="tool-btn" id="btn-bond-2" onclick="setBuilderBondOrder(2)">Двойная (=)</button>
+                <button class="tool-btn" id="btn-bond-3" onclick="setBuilderBondOrder(3)">Тройная (≡)</button>
+            </div>
+
+            <!-- Element Hot Bar & Cold Bar -->
+            <div class="builder-toolbar" style="background: var(--wiki-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <span style="font-size: 13px; font-weight: bold; margin-right: 5px;" id="i18n-lbl-hotbar">🔥 Избранные элементы:</span>
+                <div id="hotbar-elements-container" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+                
+                <button class="tool-btn" onclick="openPeriodicModal()" style="border-color: var(--accent-color); color: var(--accent-color); margin-left: 8px;">
+                    🧪 <strong id="i18n-btn-ptable">Таблица Менделеева (Все элементы)</strong>
+                </button>
+            </div>
+
+            <!-- Quick Fragment Palette (WITH "СОСЕДИ" He-Fr BUTTON!) -->
+            <div style="background: var(--wiki-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin: 12px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 13px; font-weight: bold; color: var(--accent-color);" id="i18n-lbl-fragments">⚡ Быстрые взаимодействия и фрагменты:</span>
+                    <button class="tool-btn" onclick="saveCurrentAsCustomPreset()" style="font-size: 11px; padding: 4px 10px;" id="i18n-btn-savepreset">⭐ Сохранить сцену как пресет</button>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center;">
+                    <!-- СПЕЦИАЛЬНАЯ КНОПКА "СОСЕДИ" (ГЕЛИЙ + ФРАНЦИЙ) -->
+                    <span class="preset-badge neighbors-badge" onclick="spawnNeighborsHeFr()" id="i18n-btn-neighbors" title="Создать соединенные Гелий (He) и Франций (Fr)">
+                        🤝 Соседи (He—Fr)
+                    </span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('c1ccccc1')">🔷 Benzene</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('c1ccncc1')">🔷 Pyridine</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('c1ccncc1-c2ccccn2')">🔷 2,2'-Bipyridine</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('C1C=CC=C1')">🔷 Cp</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('CC(C)(C)')">🌿 t-Bu</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('P(c1ccccc1)(c2ccccc2)c3ccccc3')">🌿 PPh3</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('[Na+]')">⚡ Na+</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('[Cl-]')">⚡ Cl-</span>
+                    <span class="preset-badge" onclick="insertPresetSMILES('[B-](c1cc(cc(c1)C(F)(F)F)C(F)(F)F)(c2cc(cc(c2)C(F)(F)F)C(F)(F)F)(c3cc(cc(c3)C(F)(F)F)C(F)(F)F)c4cc(cc(c4)C(F)(F)F)C(F)(F)F')">🛡️ BArF-</span>
+                </div>
+                <div id="custom-presets-container" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+            </div>
+
+            <!-- Viewport with Interactive Measurement Suite Badge -->
+            <div style="position: relative;" id="canvas-wrapper">
+                <div class="hud-overlay" id="builderHud">Атомов: 0 | Выбрано: 0</div>
+                <div class="measure-badge" id="measureBadge">📏 Размер: -</div>
+                <div id="selection-box"></div>
+                <div id="builder-canvas-container" style="width: 100%; height: 520px; background: #151515; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;"></div>
+            </div>
+
+            <!-- Analysis Output -->
+            <div style="display: flex; justify-content: center; margin-top: 15px;">
+                <button class="primary-btn" onclick="analyzeBuilderStructure()" style="width: 100%; max-width: 450px;" id="i18n-btn-identify">🧪 Распознать вещество и вывести SMILES</button>
+            </div>
+            
+            <div class="info-panel" id="builderAnalysisPanel" style="margin-top: 15px; display: none;">
+                <h4 style="margin: 0 0 10px 0; color: var(--accent-color);" id="i18n-lbl-intel">🔬 Результат анализа структуры</h4>
+                <p><strong id="i18n-lbl-derived-smiles">Канонический SMILES:</strong> <button class="copy-btn" onclick="copyBuilderSmiles()">Copy</button><div id="builderOutSmiles" class="smiles-box">-</div></p>
+                <p><strong id="i18n-lbl-resolved-id">Идентификация:</strong> <span id="builderOutName">-</span> (<span id="builderOutFormula">-</span>, <span id="builderOutWeight">-</span> g/mol)</p>
+                <div class="wiki-box" id="builderOutWiki">Справка из Википедии появится здесь.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLD BAR: PERIODIC TABLE MODAL -->
+    <div id="periodic-modal">
+        <div class="ptable-container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: var(--accent-color);" id="i18n-modal-ptable-title">🧪 Периодическая система элементов Д. И. Менделеева</h3>
+                <button class="tool-btn" onclick="closePeriodicModal()" style="font-size: 16px; padding: 4px 10px;">✕</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 6px 0 0 0;" id="i18n-modal-ptable-sub">Нажмите на любой элемент, чтобы выбрать его для строительства и закрепить на панели быстрого доступа.</p>
+            <div class="ptable-grid" id="ptable-grid-target"></div>
+        </div>
+    </div>
+
+    <!-- BIRTHDAY GREETING MODAL -->
+    <div id="birthday-modal">
+        <div class="birthday-card-modal">
+            <div style="font-size: 52px; margin-bottom: 10px;">🎂🧪🎉</div>
+            <h2 style="color: var(--gold-color); margin-top: 0;" id="i18n-modal-bday-h">С Днём Рождения, Кирилл Михайлович!</h2>
+            <p style="font-size: 15px; line-height: 1.6; color: var(--text-color);" id="i18n-modal-bday-p">
+                Спасибо Вам за вдохновение, глубокие знания и любовь к настоящей науке! 
+                Это специальное именное издание <strong>Advanced Chemistry Engine</strong> создано специально для Вас. 
+                В 3D-редактор также добавлена эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>, соединяющая самые далекие противоположности таблицы Менделеева — Гелий и Франций!
+            </p>
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
+                <button class="primary-btn" onclick="closeBirthdayModal(); spawnNeighborsHeFr();" style="background: var(--gold-color); color: #000;" id="i18n-modal-bday-try">🤝 Испытать «Соседей (He—Fr)»</button>
+                <button class="tool-btn" onclick="closeBirthdayModal()" id="i18n-modal-bday-close">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let viewer3D;
+        let currentSmiles = "";
+        let currentCID = null;
+        let currentLang = localStorage.getItem('ace_lang') || 'ru';
+
+        // DICTIONARY RU / EN
+        const I18N = {
+            ru: {
+                'bday-banner-title': '🎂 Special Edition: С Днём Рождения, Кирилл Михайлович Ляпишев! 🎉',
+                'bday-banner-sub': 'Эксклюзивная сборка химического движка в честь лучшего учителя химии! Пусть каждая реакция идет со 100% выходом!',
+                'btn-salute': '🎆 Салют!',
+                'btn-card': '🎁 Открытка',
+                'app-subtitle': 'Ищите любые соединения, переводите названия автоматически и изучайте 3D-структуры.',
+                'btn-analyze': 'Анализировать',
+                'force-smiles-top': '🧬 Строгий режим SMILES (Сервер Python)',
+                'card-details': 'Сведения о веществе',
+                'lbl-name': 'Название (IUPAC):',
+                'lbl-formula': 'Молекулярная формула:',
+                'lbl-weight': 'Молярная масса:',
+                'btn-copy1': 'Копировать',
+                'lbl-2dmap': '2D Структурная карта (Наведите для зума)',
+                'lbl-3dmodel': 'Интерактивная 3D-модель',
+                'lbl-showh': 'Показывать водород (H)',
+                'swarm-title': '🎬 Аниматор реакций True-Time Swarm',
+                'force-smiles-swarm': '🧬 Строгий SMILES (Python)',
+                'swarm-desc': 'Введите коэффициенты, SMILES или формулы. <strong style="color: var(--accent-color);">Зажмите мышь, чтобы вращать 3D-камеру прямо во время записи!</strong>',
+                'swarm-cfg': '⚙️ Настройки времени и вращения',
+                'sl-dur': '⏳ Длительность анимации (сек)',
+                'sl-c1': 'Скорость орбиты сцены 1',
+                'sl-c2': 'Скорость орбиты сцены 2',
+                'sl-r1': 'Вращение Реагента 1',
+                'sl-r2': 'Вращение Реагента 2',
+                'sl-p1': 'Вращение Продукта 1',
+                'sl-p2': 'Вращение Продукта 2',
+                'btn-record': '🎥 Сгенерировать видео реакции (WebM)',
+                'wb-title': '🏗️ 3D Молекулярный Конструктор (Kirill Mikhailovich Pro Suite)',
+                'wb-nav': '<strong style="color:var(--accent-color)">Навигация:</strong> [W/A/S/D] Полет | [Q/E] Вниз/Вверх | [Shift] Ускорение | ПКМ = Обзор | СКМ = Панорама | ЛКМ = Выбор | <strong style="color:var(--accent-color)">[R] = Перемещение/Вращение</strong>',
+                'btn-cif': '💎 Импорт .CIF / .PDB',
+                'btn-upsdf': '📂 Загрузить .SDF',
+                'btn-downsdf': '💾 Скачать .SDF',
+                'btn-4k': '📸 4K PNG (Прозрачный)',
+                'btn-autobond': '⚡ Авто-связи / Изомеры',
+                'smiles-loader-lbl': '🧬 Загрузчик SMILES:',
+                'btn-replace': '📥 Заменить сцену',
+                'btn-append': '➕ Добавить на сцену',
+                'lbl-hotkeys': 'Инструменты:',
+                'btn-tool-select': '👆 [1] Выбор / Гизмо',
+                'btn-tool-add': '➕ [2] Создать атом',
+                'btn-tool-bond': '🔗 [3] Связать (Группа ➔ Цель)',
+                'btn-del': '🗑️ [Del] Удалить',
+                'lbl-floor': '📐 Сетка:',
+                'btn-clear': '🧹 Очистить сцену',
+                'lbl-smartchem': '🧪 Управление водородом и зарядами:',
+                'btn-h-add': '➕ Добавить H',
+                'btn-h-nonpolar': '🧹 Убрать неполярные H (C-H)',
+                'btn-h-polar': '💧 Убрать полярные H (O-H, N-H)',
+                'btn-h-all': '❌ Убрать все H',
+                'btn-charges-toggle': '⚡ Заряды по Гастейгеру (RWB)',
+                'lbl-stripsolv': 'Удалять растворители',
+                'lbl-bondorder': 'Кратность связи:',
+                'btn-bond-1': 'Одинарная (—)',
+                'btn-bond-2': 'Двойная (=)',
+                'btn-bond-3': 'Тройная (≡)',
+                'lbl-hotbar': '🔥 Избранные элементы:',
+                'btn-ptable': 'Таблица Менделеева (Все элементы)',
+                'lbl-fragments': '⚡ Быстрые взаимодействия и фрагменты:',
+                'btn-savepreset': '⭐ Сохранить сцену как пресет',
+                'btn-neighbors': '🤝 Соседи (He—Fr)',
+                'btn-identify': '🧪 Распознать вещество и вывести SMILES',
+                'lbl-intel': '🔬 Результат анализа структуры',
+                'lbl-derived-smiles': 'Канонический SMILES:',
+                'lbl-resolved-id': 'Идентификация:',
+                'modal-ptable-title': '🧪 Периодическая система элементов Д. И. Менделеева',
+                'modal-ptable-sub': 'Нажмите на любой элемент, чтобы выбрать его для строительства и закрепить на панели быстрого доступа.',
+                'modal-bday-h': 'С Днём Рождения, Кирилл Михайлович!',
+                'modal-bday-p': 'Спасибо Вам за вдохновение, глубокие знания и любовь к настоящей науке! Это специальное именное издание <strong>Advanced Chemistry Engine</strong> создано специально для Вас. В 3D-редактор также добавлена эксклюзивная кнопка <strong>«🤝 Соседи (He—Fr)»</strong>, соединяющая самые далекие противоположности таблицы Менделеева — Гелий и Франций!',
+                'modal-bday-try': '🤝 Испытать «Соседей (He—Fr)»',
+                'modal-bday-close': 'Закрыть',
+                'search-ph': "например: 'соляная кислота', 'H2O' или 'CCO'",
+                'smiles-ph': "Вставьте SMILES для 3D-генерации (напр. CCO, c1ccccc1)...",
+                'neighbors-msg': "🎉 Создан экзотический квантовый комплекс «Соседи»: Гелий (He) — Франций (Fr)!"
+            },
+            en: {
+                'bday-banner-title': '🎂 Special Edition: Happy Birthday, Kirill Mikhailovich Lyapishev! 🎉',
+                'bday-banner-sub': 'Exclusive build of the Advanced Chemistry Engine honoring the best chemistry teacher! May every reaction yield 100%!',
+                'btn-salute': '🎆 Fireworks!',
+                'btn-card': '🎁 Greeting Card',
+                'app-subtitle': 'Search any compound, translate names automatically, and explore interactive 3D structures.',
+                'btn-analyze': 'Analyze',
+                'force-smiles-top': '🧬 Force Strict SMILES (Uses Python Server)',
+                'card-details': 'Compound Details',
+                'lbl-name': 'Resolved Name:',
+                'lbl-formula': 'Molecular Formula:',
+                'lbl-weight': 'Molecular Weight:',
+                'btn-copy1': 'Copy',
+                'lbl-2dmap': '2D Structure Map (Hover to Pan & Zoom)',
+                'lbl-3dmodel': '3D Interactive Model',
+                'lbl-showh': 'Show Hydrogen (H)',
+                'swarm-title': '🎬 True-Time Swarm Engine',
+                'force-smiles-swarm': '🧬 Force Strict SMILES (Python)',
+                'swarm-desc': 'Enter coefficients, SMILES, or formulas. <strong style="color: var(--accent-color);">Click & Drag to spin the 3D space during recording!</strong>',
+                'swarm-cfg': '⚙️ True-Time Configuration',
+                'sl-dur': '⏳ Total Animation Duration (Seconds)',
+                'sl-c1': 'Scene Auto-Orbit 1 Speed',
+                'sl-c2': 'Scene Auto-Orbit 2 Speed',
+                'sl-r1': 'Reactant 1 Spin Speed',
+                'sl-r2': 'Reactant 2 Spin Speed',
+                'sl-p1': 'Product 1 Spin Speed',
+                'sl-p2': 'Product 2 Spin Speed',
+                'btn-record': '🎥 Generate True-Time WebM',
+                'wb-title': '🏗️ 3D Molecular Workbench (Kirill Mikhailovich Pro Suite)',
+                'wb-nav': '<strong style="color:var(--accent-color)">Navigation:</strong> [W/A/S/D] Fly | [Q/E] Down/Up | [Shift] Speed | Right-Click = Look | Middle-Click = Pan | Left-Click = Select | <strong style="color:var(--accent-color)">[R] = Move/Rotate</strong>',
+                'btn-cif': '💎 Import .CIF / .PDB',
+                'btn-upsdf': '📂 Upload .SDF',
+                'btn-downsdf': '💾 Download .SDF',
+                'btn-4k': '📸 4K PNG (Transparent)',
+                'btn-autobond': '⚡ Auto-Bond / Solver',
+                'smiles-loader-lbl': '🧬 SMILES Loader:',
+                'btn-replace': '📥 Replace Scene',
+                'btn-append': '➕ Append to Scene',
+                'lbl-hotkeys': 'Hotkeys:',
+                'btn-tool-select': '👆 [1] Select / Gizmo',
+                'btn-tool-add': '➕ [2] Spawn Atom',
+                'btn-tool-bond': '🔗 [3] Form Bonds (Group ➔ Target)',
+                'btn-del': '🗑️ [Del] Delete',
+                'lbl-floor': '📐 Floor:',
+                'btn-clear': '🧹 Clear Canvas',
+                'lbl-smartchem': '🧪 Smart Chemistry Tools:',
+                'btn-h-add': '➕ Add/Saturate H',
+                'btn-h-nonpolar': '🧹 Strip Non-Polar H (C-H)',
+                'btn-h-polar': '💧 Strip Polar H (O-H, N-H)',
+                'btn-h-all': '❌ Strip All H',
+                'btn-charges-toggle': '⚡ Electrostatic Charges (RWB)',
+                'lbl-stripsolv': 'Strip Solvents',
+                'lbl-bondorder': 'Bond Order Selector:',
+                'btn-bond-1': 'Single (—)',
+                'btn-bond-2': 'Double (=)',
+                'btn-bond-3': 'Triple (≡)',
+                'lbl-hotbar': '🔥 Hot Bar:',
+                'btn-ptable': 'Periodic Table (Cold Bar)',
+                'lbl-fragments': '⚡ Quick Fragments & Interactions:',
+                'btn-savepreset': '⭐ Save Current as Preset',
+                'btn-neighbors': '🤝 Neighbors (He—Fr)',
+                'btn-identify': '🧪 Identify Compound & Derive SMILES',
+                'lbl-intel': '🔬 Structure Intelligence Output',
+                'lbl-derived-smiles': 'Derived Canonical SMILES:',
+                'lbl-resolved-id': 'Resolved Identification:',
+                'modal-ptable-title': '🧪 Periodic Table of Elements (Cold Bar)',
+                'modal-ptable-sub': 'Click any element to select it for building and automatically pin it to your active Hot Bar.',
+                'modal-bday-h': 'Happy Birthday, Kirill Mikhailovich!',
+                'modal-bday-p': 'Thank you for your inspiration, deep knowledge, and passion for true chemistry! This custom <strong>Advanced Chemistry Engine</strong> edition was built specially for you. Check out the <strong>"🤝 Neighbors (He—Fr)"</strong> quick-action button in the 3D Workbench!',
+                'modal-bday-try': '🤝 Spawn "Neighbors (He—Fr)"',
+                'modal-bday-close': 'Close',
+                'search-ph': "e.g., 'hydrochloric acid', 'H2O', or 'CCO'",
+                'smiles-ph': "Paste SMILES to load into 3D workspace (e.g. CCO, c1ccccc1)...",
+                'neighbors-msg': "🎉 Spawned exotic quantum complex 'Neighbors': Helium (He) — Francium (Fr)!"
+            }
+        };
+
+        function applyLanguage() {
+            const dict = I18N[currentLang];
+            Object.keys(dict).forEach(key => {
+                const el = document.getElementById('i18n-' + key) || document.getElementById(key);
+                if (el) el.innerHTML = dict[key];
+            });
+            document.getElementById('searchInput').placeholder = dict['search-ph'];
+            document.getElementById('builderSmilesInput').placeholder = dict['smiles-ph'];
+            document.getElementById('langToggleBtn').innerText = currentLang === 'ru' ? '🇷🇺 RU ➔ 🇬🇧 EN' : '🇬🇧 EN ➔ 🇷🇺 RU';
+            updateThemeButtonLabel();
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function toggleLanguage() {
+            currentLang = (currentLang === 'ru') ? 'en' : 'ru';
+            localStorage.setItem('ace_lang', currentLang);
+            applyLanguage();
+        }
+
+        function launchConfettiSalute() {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0 } }), 200);
+                setTimeout(() => confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1 } }), 400);
+            }
+        }
+
+        function openBirthdayModal() {
+            document.getElementById('birthday-modal').style.display = 'flex';
+            launchConfettiSalute();
+        }
+
+        function closeBirthdayModal() {
+            document.getElementById('birthday-modal').style.display = 'none';
+        }
+
+        // CPK COLOR PALETTE (118 ELEMENTS)
+        const CPK_COLORS = {
+            'H': 0xFFFFFF, 'He': 0xD9FFFF, 'Li': 0xCC80FF, 'Be': 0xC2FF00, 'B': 0xFFB5B5, 'C': 0x909090, 'N': 0x3050F8, 'O': 0xFF0D0D, 'F': 0x90E050, 'Ne': 0xB3E3F5,
+            'Na': 0xAB5CF2, 'Mg': 0x8AFF00, 'Al': 0xBFA6A6, 'Si': 0xF0C8A0, 'P': 0xFF8000, 'S': 0xFFFF30, 'Cl': 0x1FF01F, 'Ar': 0x80D1E3,
+            'K': 0x8F40D4, 'Ca': 0x3DFF00, 'Sc': 0xE6E6E6, 'Ti': 0xBFC2C7, 'V': 0xA6A6AB, 'Cr': 0x8A99C7, 'Mn': 0x9C7AC7, 'Fe': 0xE06633, 'Co': 0x7070F0, 'Ni': 0x50D050, 'Cu': 0xC88033, 'Zn': 0x7D80B0, 'Ga': 0xC28F8F, 'Ge': 0x668F8F, 'As': 0xBD80E3, 'Se': 0xFFA100, 'Br': 0xA62929, 'Kr': 0x5CB8D1,
+            'Rb': 0x702EB0, 'Sr': 0x00FF00, 'Y': 0x94FFFF, 'Zr': 0x94E0E0, 'Nb': 0x73C2C9, 'Mo': 0x54B5B5, 'Tc': 0x3B9E9E, 'Ru': 0x248F8F, 'Rh': 0x0A7D8C, 'Pd': 0x006985, 'Ag': 0xC0C0C0, 'Cd': 0xFFD98F, 'In': 0xA67573, 'Sn': 0x668080, 'Sb': 0x9E63B5, 'Te': 0xD47A00, 'I': 0x940094, 'Xe': 0x429EB0,
+            'Cs': 0x57178F, 'Ba': 0x00C900, 'La': 0x70D4FF, 'Ce': 0xFFFFC7, 'Pr': 0xD9FFC7, 'Nd': 0xC7FFC7, 'Pm': 0xA3FFC7, 'Sm': 0x8FFFC7, 'Eu': 0x61FFC7, 'Gd': 0x45FFC7, 'Tb': 0x30FFC7, 'Dy': 0x1FFFC7, 'Ho': 0x00FF9C, 'Er': 0x00E675, 'Tm': 0x00D452, 'Yb': 0x00BF38, 'Lu': 0x00AB24, 'Hf': 0x4DC2FF, 'Ta': 0x4DA6FF, 'W': 0x2194D6, 'Re': 0x267DAB, 'Os': 0x266696, 'Ir': 0x175487, 'Pt': 0xD0D0E0, 'Au': 0xFFD123, 'Hg': 0xB8B8D0, 'Tl': 0xA6544D, 'Pb': 0x575961, 'Bi': 0x9E4FB5, 'Po': 0xAB5C00, 'At': 0x754F45, 'Rn': 0x428296,
+            'Fr': 0x420066, 'Ra': 0x007D00, 'Ac': 0x70ABFA, 'Th': 0x00BAFF, 'Pa': 0x00A1FF, 'U': 0x008FFF, 'Np': 0x0080FF, 'Pu': 0x006BFF, 'Am': 0x545CF2, 'Cm': 0x785CE3, 'Bk': 0x8A4FE3, 'Cf': 0xA136D4, 'Es': 0xB31FD4, 'Fm': 0xB31FBA, 'Md': 0xB30DA6, 'No': 0xBD0D87, 'Lr': 0xC70066, 'Rf': 0xCC0059, 'Db': 0xD1004F, 'Sg': 0xD90045, 'Bh': 0xE00038, 'Hs': 0xE6002E, 'Mt': 0xEB0026, 'Ds': 0xEB0026, 'Rg': 0xEB0026, 'Cn': 0xEB0026, 'Nh': 0xEB0026, 'Fl': 0xEB0026, 'Mc': 0xEB0026, 'Lv': 0xEB0026, 'Ts': 0xEB0026, 'Og': 0xEB0026
+        };
+
+        window.onload = function() {
+            viewer3D = $3Dmol.createViewer("viewer3d", { backgroundColor: "#1e1e1e" });
+            document.getElementById("searchInput").addEventListener("keyup", function(event) {
+                if (event.key === "Enter") processSearch();
+            });
+            initMolecularBuilder();
+            renderCustomPresets();
+            renderHotbar();
+            buildPeriodicTableGrid();
+            applyLanguage();
+            setTimeout(launchConfettiSalute, 500);
+        };
+
+        function updateThemeButtonLabel() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeToggleBtn');
+            if (!btn) return;
+            if (html.getAttribute('data-theme') === 'dark') {
+                btn.innerText = currentLang === 'ru' ? '☀️ Светлая тема' : '☀️ Light Mode';
+            } else {
+                btn.innerText = currentLang === 'ru' ? '🌙 Темная тема' : '🌙 Dark Mode';
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                if(viewer3D) viewer3D.setBackgroundColor('#ffffff');
+                if(builderRenderer) builderScene.background = new THREE.Color(0xf4f6f9);
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                if(viewer3D) viewer3D.setBackgroundColor('#1e1e1e');
+                if(builderRenderer) builderScene.background = new THREE.Color(0x151515);
+            }
+            updateThemeButtonLabel();
+        }
+
+        function zoomMap(event) {
+            const container = document.querySelector('.map-2d-container');
+            const img = document.getElementById('img2d');
+            if (!img.src) return;
+            const rect = container.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            img.style.transformOrigin = `${x}% ${y}%`;
+        }
+
+        async function fetchPubChemData(endpoint) {
+            try {
+                const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${endpoint}/property/CanonicalSMILES,MolecularFormula,MolecularWeight,IUPACName/JSON`;
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                return (await response.json()).PropertyTable.Properties[0];
+            } catch (e) { return null; }
+        }
+
+        async function resolveNameWithWiki(input) {
+            if (!input) return "";
+            const lang = /[а-яА-ЯЁё]/.test(input) ? 'ru' : 'en';
+            try {
+                const searchRes = await fetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(input)}&language=${lang}&format=json&origin=*`);
+                const searchData = await searchRes.json();
+                if (searchData.search && searchData.search.length > 0) {
+                    const entityId = searchData.search[0].id;
+                    const entityRes = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${entityId}&props=sitelinks&format=json&origin=*`);
+                    const entityData = await entityRes.json();
+                    if (entityData.entities[entityId].sitelinks && entityData.entities[entityId].sitelinks.enwiki) {
+                        return entityData.entities[entityId].sitelinks.enwiki.title;
+                    } else return searchData.search[0].label; 
+                }
+            } catch (error) {}
+            return input;
+        }
+
+        async function smartChemFetch(query, forceSmilesOverride = false) {
+            if (!query) return null;
+            if (forceSmilesOverride) {
+                if (query.length < 150) {
+                    let data = await fetchPubChemData(`smiles/${encodeURIComponent(query)}`);
+                    if (data) return data;
+                }
+                return { CID: 'CACTUS_FALLBACK', CanonicalSMILES: query, IUPACName: "Complex Target (Python Engine)", MolecularFormula: "Auto-Generated", MolecularWeight: "N/A" };
+            }
+
+            let data = await fetchPubChemData(`name/${encodeURIComponent(query)}`);
+            if (data) return data;
+            data = await fetchPubChemData(`smiles/${encodeURIComponent(query)}`);
+            if (data) return data;
+            
+            const wikiName = await resolveNameWithWiki(query);
+            if (wikiName && wikiName !== query) {
+                data = await fetchPubChemData(`name/${encodeURIComponent(wikiName)}`);
+                if (data) return data;
+            }
+            return null;
+        }
+
+        async function fetchWikiFacts(title) {
+            const wikiLang = currentLang === 'ru' ? 'ru' : 'en';
+            try {
+                const res = await fetch(`https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+                if (!res.ok) {
+                    const fallbackRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+                    if (!fallbackRes.ok) throw new Error();
+                    const data = await fallbackRes.json();
+                    let extract = data.extract || "No Wikipedia facts found.";
+                    if(extract.length > 400) extract = extract.substring(0, 400) + "...";
+                    document.getElementById("wikiExtract").innerHTML = `<i>" ${extract} "</i><br><br><a href="${data.content_urls.desktop.page}" target="_blank" style="color: var(--accent-color); text-decoration: none; font-weight: bold;">Wikipedia ➔</a>`;
+                    return;
+                }
+                const data = await res.json();
+                let extract = data.extract || "No Wikipedia facts found.";
+                if(extract.length > 400) extract = extract.substring(0, 400) + "...";
+                document.getElementById("wikiExtract").innerHTML = `<i>" ${extract} "</i><br><br><a href="${data.content_urls.desktop.page}" target="_blank" style="color: var(--accent-color); text-decoration: none; font-weight: bold;">Wikipedia ➔</a>`;
+            } catch(e) { document.getElementById("wikiExtract").innerText = currentLang === 'ru' ? "Статья в Википедии не найдена." : "Information not available on Wikipedia."; }
+        }
+
+        async function processSearch() {
+            const rawInput = document.getElementById("searchInput").value.trim();
+            const statusMsg = document.getElementById("statusMsg");
+            const forceSmilesTop = document.getElementById("forceSmilesTop").checked;
+            
+            if (!rawInput) return;
+            statusMsg.innerText = currentLang === 'ru' ? "Анализируем соединение..." : "Analyzing compound...";
+            try {
+                const pubChemData = await smartChemFetch(rawInput, forceSmilesTop);
+                if (!pubChemData) throw new Error(currentLang === 'ru' ? `Соединение не найдено в базе.` : `Compound not found in database.`);
+                currentCID = pubChemData.CID;
+                currentSmiles = pubChemData.CanonicalSMILES || "N/A";
+                const iupacName = pubChemData.IUPACName || rawInput;
+                
+                document.getElementById("outName").innerText = iupacName;
+                document.getElementById("outFormula").innerText = pubChemData.MolecularFormula || "N/A";
+                document.getElementById("outWeight").innerText = pubChemData.MolecularWeight || "N/A";
+                document.getElementById("outSmiles").innerText = currentSmiles;
+                
+                if (currentCID === 'CACTUS_FALLBACK') {
+                    try {
+                        const res2d = await fetch('http://127.0.0.1:5000/api/generate_2d', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ smiles: currentSmiles })
+                        });
+                        if (res2d.ok) {
+                            const json2d = await res2d.json();
+                            if (json2d.image) document.getElementById("img2d").src = json2d.image;
+                            else throw new Error();
+                        } else throw new Error();
+                    } catch(e) {
+                        document.getElementById("img2d").src = `https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(currentSmiles)}/image`;
+                    }
+                } else {
+                    document.getElementById("img2d").src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${currentCID}/PNG?image_size=large`;
+                }
+                
+                fetchWikiFacts(rawInput);
+                let success3D = await draw3D(currentCID, currentSmiles);
+                if (!success3D) throw new Error("3D folding failed.");
+                
+                statusMsg.innerText = currentLang === 'ru' ? "Готово! 2D/3D модели успешно построены." : "Success! Generated maps and facts.";
+                statusMsg.style.color = "var(--accent-color)";
+            } catch (error) {
+                statusMsg.innerText = "Error: " + error.message;
+                statusMsg.style.color = "#ff4444";
+            }
+        }
+
+        async function fetchSDFText(cid, smiles) {
+            if (smiles) {
+                try {
+                    const localResponse = await fetch('http://127.0.0.1:5000/api/generate_sdf', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ smiles: smiles })
+                    });
+                    if (localResponse.ok) {
+                        const resJson = await localResponse.json();
+                        if (resJson.sdf) return resJson.sdf;
+                    }
+                } catch (err) {}
+            }
+
+            if (cid === 'CACTUS_FALLBACK' || !cid) {
+                try {
+                    let res = await fetch(`https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(smiles)}/file?format=sdf&get3d=true`);
+                    if (!res.ok) res = await fetch(`https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(smiles)}/file?format=sdf`); 
+                    if (res.ok) return await res.text();
+                } catch (e) {}
+                return null;
+            } 
+            try {
+                let res = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=3d`);
+                if (!res.ok) res = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=2d`);
+                if (res.ok) return await res.text();
+            } catch(e) {}
+            return null;
+        }
+
+        async function draw3D(cid, smiles) {
+            viewer3D.clear();
+            let sdfText = await fetchSDFText(cid, smiles);
+            if (sdfText) {
+                try {
+                    viewer3D.addModel(sdfText, "sdf");
+                    apply3DStyle();
+                    viewer3D.zoomTo();
+                    return true;
+                } catch(e) { return false; }
+            }
+            return false;
+        }
+
+        function apply3DStyle() {
+            if (!viewer3D) return;
+            viewer3D.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.3 } });
+            if (!document.getElementById('show-h-toggle').checked) viewer3D.setStyle({ elem: 'H' }, {}); 
+            viewer3D.render();
+        }
+
+        function copySmiles() {
+            if (!currentSmiles || currentSmiles === "-") return;
+            navigator.clipboard.writeText(currentSmiles);
+        }
+
+        // SWARM ENGINE IMPLEMENTATION
+        let reactionScene, reactionCamera, reactionRenderer, controls;
+
+        const HARDCODED_GASES = {
+            'H2': { e: ['H','H'], d: 0.74, o: 1 }, '[H][H]': { e: ['H','H'], d: 0.74, o: 1 },
+            'O2': { e: ['O','O'], d: 1.21, o: 2 }, 'O=O': { e: ['O','O'], d: 1.21, o: 2 },
+            'N2': { e: ['N','N'], d: 1.10, o: 3 }, 'N#N': { e: ['N','N'], d: 1.10, o: 3 },
+            'CL2': { e: ['Cl','Cl'], d: 1.99, o: 1 }, 'F2': { e: ['F','F'], d: 1.42, o: 1 }
+        };
+
+        function extractCoefficient(input) {
+            let match = input.match(/^(\d+)(.*)/);
+            if (match) return { coef: parseInt(match[1]), formula: match[2] };
+            return { coef: 1, formula: input };
+        }
+
+        function createAtomMesh(elem, x, y, z) {
+            const key = elem ? (elem.charAt(0).toUpperCase() + elem.slice(1).toLowerCase()) : 'C';
+            const colorHex = CPK_COLORS[key] || CPK_COLORS[elem] || 0xC8C8C8;
+            const radius = key === 'H' ? 0.35 : (key === 'Fr' ? 0.85 : (key === 'He' ? 0.45 : 0.6));
+            const geo = new THREE.SphereGeometry(radius, 32, 32);
+            const mat = new THREE.MeshPhongMaterial({ color: colorHex, shininess: 100 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.userData = { elem: key, charge: 0.0 }; 
+            return mesh;
+        }
+
+        function createBondMesh(pos1, pos2, order = 1) {
+            const group = new THREE.Group();
+            const distance = pos1.distanceTo(pos2);
+            if (distance < 0.001) return group; 
+
+            const dir = pos2.clone().sub(pos1).normalize();
+            let perp = new THREE.Vector3(0, 1, 0).cross(dir);
+            if (perp.lengthSq() < 0.01) perp = new THREE.Vector3(1, 0, 0).cross(dir);
+            perp.normalize().multiplyScalar(0.25); 
+
+            const geo = new THREE.CylinderGeometry(0.04, 0.04, distance, 8); 
+            const mat = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+
+            const drawCyl = (offsetVec) => {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.copy(pos1).lerp(pos2, 0.5).add(offsetVec);
+                mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+                group.add(mesh);
+            };
+
+            if (order === 1 || order === 4) {
+                drawCyl(new THREE.Vector3(0,0,0));
+            } else if (order === 2) {
+                drawCyl(perp); 
+                drawCyl(perp.clone().negate());
+            } else if (order === 3) {
+                drawCyl(new THREE.Vector3(0,0,0));
+                drawCyl(perp.clone().multiplyScalar(1.5)); 
+                drawCyl(perp.clone().multiplyScalar(-1.5));
+            } else {
+                drawCyl(new THREE.Vector3(0,0,0));
+            }
+            return group;
+        }
+
+        function createHardcodedDiatomic(data) {
+            const group = new THREE.Group();
+            group.userData.atoms = [];
+            let a1 = createAtomMesh(data.e[0], -data.d/2, 0, 0);
+            let a2 = createAtomMesh(data.e[1], data.d/2, 0, 0);
+            group.add(a1, a2);
+            group.userData.atoms.push(a1, a2);
+            group.add(createBondMesh(a1.position, a2.position, data.o));
+            return group;
+        }
+
+        function parseSDFToGroup(sdfText) {
+            const group = new THREE.Group();
+            group.userData.atoms = [];
+            if (!sdfText) return group;
+            const lines = sdfText.split('\n');
+            if (lines.length < 4) return group;
+            
+            let numAtoms = 0, numBonds = 0;
+            if (lines[3].length >= 6) {
+                numAtoms = parseInt(lines[3].substring(0, 3).trim());
+                numBonds = parseInt(lines[3].substring(3, 6).trim());
+            }
+            if (isNaN(numAtoms) || isNaN(numBonds)) {
+                const counts = lines[3].trim().split(/\s+/);
+                numAtoms = parseInt(counts[0]);
+                numBonds = parseInt(counts[1]);
+            }
+
+            let atomMeshes = [];
+            let lineIdx = 4;
+            
+            for (let i = 0; i < numAtoms; i++) {
+                const l = lines[lineIdx++];
+                if (!l || l.length < 30) continue; 
+                const parts = l.trim().split(/\s+/);
+                let atom = createAtomMesh(parts[3], parseFloat(parts[0]), parseFloat(parts[1]), parseFloat(parts[2]));
+                atomMeshes.push(atom);
+                group.add(atom);
+                group.userData.atoms.push(atom);
+            }
+
+            for (let i = 0; i < numBonds; i++) {
+                const l = lines[lineIdx++];
+                if (!l || l.length < 6) continue; 
+                const parts = l.trim().split(/\s+/);
+                const a1 = parseInt(parts[0]) - 1;
+                const a2 = parseInt(parts[1]) - 1;
+                const order = parseInt(parts[2]);
+                if (atomMeshes[a1] && atomMeshes[a2]) {
+                    group.add(createBondMesh(atomMeshes[a1].position, atomMeshes[a2].position, order));
+                }
+            }
+            return group;
+        }
+
+        function buildMultiMoleculeGroup(sdfText, coef, formula) {
+            const masterGroup = new THREE.Group();
+            masterGroup.userData.allAtoms = [];
+            for(let m = 0; m < coef; m++) {
+                let mol = HARDCODED_GASES[formula.toUpperCase()] ? createHardcodedDiatomic(HARDCODED_GASES[formula.toUpperCase()]) : parseSDFToGroup(sdfText);
+                mol.position.set(m * 2.5 - ((coef - 1) * 1.25), (Math.random()-0.5), (Math.random()-0.5));
+                masterGroup.add(mol);
+                masterGroup.userData.allAtoms.push(...mol.userData.atoms);
+            }
+            return masterGroup;
+        }
+
+        async function playProceduralCutscene() {
+            if (typeof THREE === 'undefined') { document.getElementById("animStatus").innerText = "Error: Engine missing."; return; }
+
+            const durationSec = parseFloat(document.getElementById("animDuration").value);
+            const cS1 = parseFloat(document.getElementById("camSpeed1").value);
+            const cS2 = parseFloat(document.getElementById("camSpeed2").value);
+            const sR1 = parseFloat(document.getElementById("spinR1").value);
+            const sR2 = parseFloat(document.getElementById("spinR2").value);
+            const sP1 = parseFloat(document.getElementById("spinP1").value);
+            const sP2 = parseFloat(document.getElementById("spinP2").value);
+
+            const r1_obj = extractCoefficient(document.getElementById("r1").value.trim());
+            const r2_obj = extractCoefficient(document.getElementById("r2").value.trim());
+            const p1_obj = extractCoefficient(document.getElementById("p1").value.trim());
+            const p2_obj = extractCoefficient(document.getElementById("p2").value.trim());
+
+            const container = document.getElementById("threejs-container");
+            const status = document.getElementById("animStatus");
+            const forceSmiles = document.getElementById("forceSmiles").checked;
+            
+            if (!r1_obj.formula || !p1_obj.formula) {
+                status.innerText = currentLang === 'ru' ? "Пожалуйста, укажите Реагент 1 и Продукт 1." : "Please enter Reactant 1 and Product 1."; status.style.color = "#ff4444"; return;
+            }
+
+            container.style.display = "block"; container.innerHTML = ""; 
+            status.innerText = currentLang === 'ru' ? "Расчет 3D-геометрий через сервер Python..." : "Fetching True Geometries via Python Server..."; status.style.color = "var(--accent-color)";
+
+            try {
+                const sdfs = await Promise.all([r1_obj, r2_obj, p1_obj, p2_obj].map(async obj => {
+                    if(!obj.formula || HARDCODED_GASES[obj.formula.toUpperCase()]) return null; 
+                    const data = await smartChemFetch(obj.formula, forceSmiles);
+                    if(!data) throw new Error(`Missing ${obj.formula}`);
+                    let sdfText = await fetchSDFText(data.CID, data.CanonicalSMILES || obj.formula);
+                    if(!sdfText) throw new Error(`Engine failed to fold ${obj.formula}`);
+                    return sdfText;
+                }));
+
+                reactionScene = new THREE.Scene();
+                reactionScene.background = new THREE.Color(0x1e1e1e);
+                
+                reactionCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000); 
+                reactionRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+                reactionRenderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(reactionRenderer.domElement);
+                
+                if (typeof THREE.OrbitControls !== 'undefined') {
+                    controls = new THREE.OrbitControls(reactionCamera, reactionRenderer.domElement);
+                    controls.enableDamping = true;
+                }
+
+                reactionScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                const ptLight = new THREE.PointLight(0xffffff, 0.8); ptLight.position.set(5, 5, 5);
+                reactionScene.add(ptLight);
+
+                const worldPivot = new THREE.Group();
+                reactionScene.add(worldPivot);
+
+                let r1Group = buildMultiMoleculeGroup(sdfs[0], r1_obj.coef, r1_obj.formula);
+                let r2Group = buildMultiMoleculeGroup(sdfs[1], r2_obj.coef, r2_obj.formula);
+                let p1Group = buildMultiMoleculeGroup(sdfs[2], p1_obj.coef, p1_obj.formula);
+                let p2Group = buildMultiMoleculeGroup(sdfs[3], p2_obj.coef, p2_obj.formula);
+
+                const getMaxSize = (group) => {
+                    if (group.children.length === 0) return 0;
+                    const box = new THREE.Box3().setFromObject(group);
+                    return box.getSize(new THREE.Vector3()).length();
+                };
+
+                const maxMolSize = Math.max(
+                    getMaxSize(r1Group), getMaxSize(r2Group),
+                    getMaxSize(p1Group), getMaxSize(p2Group)
+                );
+
+                const camDistance = Math.max(16, maxMolSize * 2.5); 
+                const spawnOffset = Math.max(4, maxMolSize * 0.7);   
+
+                r1Group.position.set(-spawnOffset, 0, 0); 
+                r2Group.position.set(spawnOffset, 0, 0);
+                p1Group.position.set(0, spawnOffset * 0.5, 0); 
+                p2Group.position.set(0, -spawnOffset * 0.5, 0);
+
+                worldPivot.add(r1Group, r2Group, p1Group, p2Group);
+                p1Group.visible = false; p2Group.visible = false;
+
+                reactionCamera.position.set(0, maxMolSize > 10 ? maxMolSize * 0.5 : 3, camDistance);
+                if (controls) controls.update();
+
+                const stream = reactionRenderer.domElement.captureStream(60);
+                const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                    a.download = `atom_swarm_${Date.now()}.webm`; a.click();
+                    status.innerText = currentLang === 'ru' ? `Видео успешно записано! (${durationSec} сек)` : `Rendered perfectly! (${durationSec} seconds)`; status.style.color = "#28a745";
+                };
+
+                mediaRecorder.start();
+                status.innerText = currentLang === 'ru' ? `Запись ${durationSec} сек... (Вращайте сцену мышью!)` : `Action! Recording ${durationSec}s Swarm...`;
+
+                let startTime = null;
+                let mappedTransitions = [];
+                let isSwarming = false;
+                let isSnapped = false;
+
+                function animate(currentTime) {
+                    if (!startTime) startTime = currentTime;
+                    let elapsed = currentTime - startTime;
+                    let progress = Math.min(elapsed / (durationSec * 1000), 1.0);
+                    
+                    if (controls) controls.update(); 
+                    
+                    if (progress <= 0.33) {
+                        worldPivot.rotation.y = (progress / 0.33) * Math.PI * 2 * cS1;
+                        r1Group.rotation.y = elapsed * 0.001 * sR1;
+                        r2Group.rotation.y = elapsed * 0.001 * sR2;
+                    } else if (progress > 0.33 && progress <= 0.66) {
+                        worldPivot.rotation.y = Math.PI * 2 * cS1; 
+                    } else if (progress > 0.66) {
+                        let p3 = (progress - 0.66) / 0.34;
+                        worldPivot.rotation.y = (Math.PI * 2 * cS1) + (p3 * Math.PI * 2 * cS2);
+                        p1Group.rotation.y = elapsed * 0.001 * sP1;
+                        p2Group.rotation.y = elapsed * 0.001 * sP2;
+                    }
+
+                    if (progress > 0.33 && !isSwarming) {
+                        r1Group.visible = false; r2Group.visible = false;
+                        let allRAtoms = [...r1Group.userData.allAtoms, ...r2Group.userData.allAtoms];
+                        let allPAtoms = [...p1Group.userData.allAtoms, ...p2Group.userData.allAtoms];
+                        let usedProducts = new Set();
+
+                        allRAtoms.forEach(rMesh => {
+                            let startPos = new THREE.Vector3(); rMesh.getWorldPosition(startPos); 
+                            let swarmMesh = createAtomMesh(rMesh.userData.elem, startPos.x, startPos.y, startPos.z);
+                            reactionScene.add(swarmMesh); 
+                            
+                            let matchIdx = allPAtoms.findIndex((pMesh, idx) => pMesh.userData.elem === rMesh.userData.elem && !usedProducts.has(idx));
+                            if (matchIdx !== -1) {
+                                usedProducts.add(matchIdx);
+                                mappedTransitions.push({ mesh: swarmMesh, pMesh: allPAtoms[matchIdx], startPos: startPos.clone() });
+                            } else {
+                                mappedTransitions.push({ mesh: swarmMesh, pMesh: null, startPos: startPos.clone() });
+                            }
+                        });
+                        isSwarming = true;
+                    }
+
+                    if (isSwarming && progress <= 0.66) {
+                        let swarmP = (progress - 0.33) / 0.33;
+                        let ease = 1 - Math.pow(1 - swarmP, 3); 
+                        mappedTransitions.forEach(trans => {
+                            if (trans.pMesh) {
+                                let targetPos = new THREE.Vector3();
+                                trans.pMesh.getWorldPosition(targetPos);
+                                trans.mesh.position.lerpVectors(trans.startPos, targetPos, ease);
+                            } else {
+                                let driftPos = trans.startPos.clone().add(new THREE.Vector3(0, 3, 0));
+                                trans.mesh.position.lerpVectors(trans.startPos, driftPos, ease);
+                                trans.mesh.scale.setScalar(Math.max(0, 1 - ease)); 
+                            }
+                        });
+                    }
+
+                    if (progress > 0.66 && !isSnapped) {
+                        mappedTransitions.forEach(trans => reactionScene.remove(trans.mesh));
+                        p1Group.visible = true; if (p2_obj.formula) p2Group.visible = true;
+                        isSnapped = true;
+                    }
+
+                    reactionRenderer.render(reactionScene, reactionCamera);
+                    if (progress < 1.0) requestAnimationFrame(animate);
+                    else mediaRecorder.stop();
+                }
+                requestAnimationFrame(animate);
+
+            } catch(e) {
+                console.error(e);
+                status.innerText = "Error: " + e.message; 
+                status.style.color = "#ff4444";
+            }
+        }
+
+        // =========================================================================
+        // 🏗️ 3D WORKBENCH + SPECIAL "СОСЕДИ (He—Fr)" INTERACTION
+        // =========================================================================
+        let builderScene, builderCamera, builderRenderer, builderControls, transformControls;
+        let builderAtoms = [];
+        let builderBonds = [];
+        let selectedAtomsOrder = [];
+        let builderTool = 'select';
+        let selectedElement = 'C';
+        let selectedBondOrder = 1;
+        let builderRaycaster = new THREE.Raycaster();
+        let builderMouse = new THREE.Vector2();
+        let groundPlaneMesh, gridHelper;
+        let gizmoPivot;
+        let isBoxSelecting = false;
+        let boxStartX = 0, boxStartY = 0;
+        let cachedIsomers = [];
+        let currentIsomerIndex = 0;
+        let keysPressed = {};
+        let currentGridSize = 30;
+        let showingGasteigerCharges = false;
+        let measureLineMeshes = [];
+
+        let hotbarElements = JSON.parse(localStorage.getItem('ace_hotbar_elements') || '["C", "H", "O", "N", "He", "Fr", "P", "S", "Cl", "F", "Pt", "Fe"]');
+
+        // СПЕЦИАЛЬНАЯ ФУНКЦИЯ БЫСТРОГО ВЗАИМОДЕЙСТВИЯ: "СОСЕДИ" (ГЕЛИЙ С ФРАНЦИЕМ)
+        function spawnNeighborsHeFr() {
+            let offsetX = builderAtoms.length > 0 ? (Math.random() * 4 - 2) : 0;
+            let offsetZ = builderAtoms.length > 0 ? (Math.random() * 4 - 2) : 0;
+
+            const heAtom = addBuilderAtom('He', offsetX - 1.15, 1.2, offsetZ);
+            const frAtom = addBuilderAtom('Fr', offsetX + 1.15, 1.2, offsetZ);
+            addBuilderBond(heAtom, frAtom, 1);
+
+            clearSelection();
+            selectAtom(heAtom, true);
+            selectAtom(frAtom, true);
+            repositionGizmo();
+            updateGeometricMeasurement();
+
+            const hud = document.getElementById("builderHud");
+            hud.innerText = I18N[currentLang]['neighbors-msg'];
+            launchConfettiSalute();
+        }
+
+        function initMolecularBuilder() {
+            const container = document.getElementById("builder-canvas-container");
+            builderScene = new THREE.Scene();
+            builderScene.background = new THREE.Color(0x151515);
+
+            builderCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            builderCamera.position.set(0, 8, 14);
+
+            builderRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            builderRenderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(builderRenderer.domElement);
+
+            builderControls = new THREE.OrbitControls(builderCamera, builderRenderer.domElement);
+            builderControls.enableDamping = true;
+            builderControls.screenSpacePanning = true;
+            builderControls.mouseButtons = {
+                LEFT: null,
+                MIDDLE: THREE.MOUSE.PAN,
+                RIGHT: THREE.MOUSE.ROTATE
+            };
+
+            builderScene.add(new THREE.AmbientLight(0xffffff, 0.85));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.75);
+            dirLight.position.set(10, 20, 10);
+            builderScene.add(dirLight);
+
+            buildWorkspaceFloor(currentGridSize);
+
+            gizmoPivot = new THREE.Group();
+            builderScene.add(gizmoPivot);
+
+            transformControls = new THREE.TransformControls(builderCamera, builderRenderer.domElement);
+            transformControls.size = 0.75;
+            transformControls.setMode('translate');
+            builderScene.add(transformControls);
+
+            let previousPivotPos = new THREE.Vector3();
+            let previousPivotQuat = new THREE.Quaternion();
+
+            transformControls.addEventListener('dragging-changed', function (event) {
+                builderControls.enabled = !event.value;
+                if (event.value) {
+                    previousPivotPos.copy(gizmoPivot.position);
+                    previousPivotQuat.copy(gizmoPivot.quaternion);
+                }
+            });
+
+            transformControls.addEventListener('change', function () {
+                if (transformControls.dragging && selectedAtomsOrder.length > 0) {
+                    const currentMode = transformControls.getMode();
+
+                    if (currentMode === 'translate') {
+                        const delta = gizmoPivot.position.clone().sub(previousPivotPos);
+                        selectedAtomsOrder.forEach(atom => {
+                            atom.mesh.position.add(delta);
+                            updateBondsForAtom(atom);
+                        });
+                        previousPivotPos.copy(gizmoPivot.position);
+                    } else if (currentMode === 'rotate') {
+                        const deltaQuat = gizmoPivot.quaternion.clone().multiply(previousPivotQuat.clone().invert());
+                        selectedAtomsOrder.forEach(atom => {
+                            const rel = atom.mesh.position.clone().sub(gizmoPivot.position);
+                            rel.applyQuaternion(deltaQuat);
+                            atom.mesh.position.copy(gizmoPivot.position).add(rel);
+                            updateBondsForAtom(atom);
+                        });
+                        previousPivotQuat.copy(gizmoPivot.quaternion);
+                    }
+                    updateGeometricMeasurement();
+                }
+            });
+
+            container.addEventListener('contextmenu', e => e.preventDefault());
+            container.addEventListener('pointerdown', onBuilderPointerDown);
+            window.addEventListener('pointermove', onBuilderPointerMove);
+            window.addEventListener('pointerup', onBuilderPointerUp);
+            window.addEventListener('resize', onBuilderWindowResize);
+
+            window.addEventListener('keydown', function(e) {
+                const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+                const key = e.key.toLowerCase();
+                keysPressed[key] = true;
+
+                if (key === '1') setBuilderTool('select');
+                else if (key === '2') setBuilderTool('add');
+                else if (key === '3') setBuilderTool('bond');
+                else if (key === 'r') toggleGizmoMode();
+                else if (e.key === 'Delete' || e.key === 'Backspace') deleteSelectedAtoms();
+            });
+
+            window.addEventListener('keyup', function(e) {
+                keysPressed[e.key.toLowerCase()] = false;
+            });
+
+            function builderAnimate() {
+                requestAnimationFrame(builderAnimate);
+
+                const moveSpeed = (keysPressed['shift'] ? 0.35 : 0.15);
+                const forward = new THREE.Vector3();
+                builderCamera.getWorldDirection(forward);
+                const right = new THREE.Vector3().crossVectors(forward, builderCamera.up).normalize();
+                const moveDelta = new THREE.Vector3();
+
+                if (keysPressed['w'] || keysPressed['ц']) moveDelta.addScaledVector(forward, moveSpeed);
+                if (keysPressed['s'] || keysPressed['ы']) moveDelta.addScaledVector(forward, -moveSpeed);
+                if (keysPressed['d'] || keysPressed['в']) moveDelta.addScaledVector(right, moveSpeed);
+                if (keysPressed['a'] || keysPressed['ф']) moveDelta.addScaledVector(right, -moveSpeed);
+                if (keysPressed['e'] || keysPressed['у']) moveDelta.y += moveSpeed;
+                if (keysPressed['q'] || keysPressed['й']) moveDelta.y -= moveSpeed;
+
+                if (moveDelta.lengthSq() > 0) {
+                    builderCamera.position.add(moveDelta);
+                    builderControls.target.add(moveDelta);
+                }
+
+                builderControls.update();
+                builderRenderer.render(builderScene, builderCamera);
+            }
+            builderAnimate();
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function clearMeasureLines() {
+            measureLineMeshes.forEach(m => builderScene.remove(m));
+            measureLineMeshes = [];
+        }
+
+        function drawMeasureLine(p1, p2, color = 0x00E5FF) {
+            const lineGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+            const lineMat = new THREE.LineDashedMaterial({ color: color, dashSize: 0.15, gapSize: 0.08 });
+            const mesh = new THREE.Line(lineGeo, lineMat);
+            mesh.computeLineDistances();
+            builderScene.add(mesh);
+            measureLineMeshes.push(mesh);
+        }
+
+        function updateGeometricMeasurement() {
+            const badge = document.getElementById("measureBadge");
+            clearMeasureLines();
+
+            if (selectedAtomsOrder.length === 2) {
+                const a1 = selectedAtomsOrder[0];
+                const a2 = selectedAtomsOrder[1];
+                const d = a1.mesh.position.distanceTo(a2.mesh.position);
+                badge.style.display = "block";
+                badge.innerHTML = `📏 ${currentLang === 'ru' ? 'Длина связи' : 'Bond Distance'} (${a1.element}—${a2.element}): <strong>${d.toFixed(3)} Å</strong>`;
+                drawMeasureLine(a1.mesh.position, a2.mesh.position);
+
+            } else if (selectedAtomsOrder.length === 3) {
+                const a1 = selectedAtomsOrder[0];
+                const a2 = selectedAtomsOrder[1];
+                const a3 = selectedAtomsOrder[2];
+
+                const v1 = a1.mesh.position.clone().sub(a2.mesh.position).normalize();
+                const v2 = a3.mesh.position.clone().sub(a2.mesh.position).normalize();
+                const angle = Math.acos(THREE.MathUtils.clamp(v1.dot(v2), -1, 1)) * (180 / Math.PI);
+                
+                badge.style.display = "block";
+                badge.innerHTML = `📐 ${currentLang === 'ru' ? 'Валентный угол' : 'Angle'} (${a1.element}—<strong>[${a2.element}]</strong>—${a3.element}): <strong>${angle.toFixed(2)}°</strong>`;
+                drawMeasureLine(a1.mesh.position, a2.mesh.position, 0x00E5FF);
+                drawMeasureLine(a2.mesh.position, a3.mesh.position, 0xFFD700);
+
+            } else if (selectedAtomsOrder.length === 4) {
+                const a1 = selectedAtomsOrder[0];
+                const a2 = selectedAtomsOrder[1];
+                const a3 = selectedAtomsOrder[2];
+                const a4 = selectedAtomsOrder[3];
+
+                const b1 = a2.mesh.position.clone().sub(a1.mesh.position);
+                const b2 = a3.mesh.position.clone().sub(a2.mesh.position);
+                const b3 = a4.mesh.position.clone().sub(a3.mesh.position);
+
+                const n1 = new THREE.Vector3().crossVectors(b1, b2).normalize();
+                const n2 = new THREE.Vector3().crossVectors(b2, b3).normalize();
+                const m = new THREE.Vector3().crossVectors(n1, b2.clone().normalize());
+
+                const x = n1.dot(n2);
+                const y = m.dot(n2);
+                const dihedral = Math.atan2(y, x) * (180 / Math.PI);
+
+                badge.style.display = "block";
+                badge.innerHTML = `🌀 ${currentLang === 'ru' ? 'Торсионный угол' : 'Dihedral'} (${a1.element}—${a2.element}—${a3.element}—${a4.element}): <strong>${dihedral.toFixed(2)}°</strong>`;
+                drawMeasureLine(a1.mesh.position, a2.mesh.position);
+                drawMeasureLine(a2.mesh.position, a3.mesh.position);
+                drawMeasureLine(a3.mesh.position, a4.mesh.position);
+
+            } else if (builderAtoms.length > 0) {
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                let minZ = Infinity, maxZ = -Infinity;
+
+                builderAtoms.forEach(a => {
+                    const p = a.mesh.position;
+                    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                    if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+                    if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
+                });
+
+                const dx = (maxX - minX).toFixed(2);
+                const dy = (maxY - minY).toFixed(2);
+                const dz = (maxZ - minZ).toFixed(2);
+
+                badge.style.display = "block";
+                badge.innerHTML = `📦 ${currentLang === 'ru' ? 'Габариты' : 'Envelope Size'}: <strong>${dx} × ${dy} × ${dz} Å</strong>`;
+            } else {
+                badge.style.display = "none";
+            }
+        }
+
+        async function toggleGasteigerCharges() {
+            showingGasteigerCharges = !showingGasteigerCharges;
+            const btn = document.getElementById("btn-charges-toggle");
+            
+            if (!showingGasteigerCharges) {
+                btn.style.background = "";
+                btn.style.color = "#ff8000";
+                builderAtoms.forEach(a => {
+                    const key = a.element ? (a.element.charAt(0).toUpperCase() + a.element.slice(1).toLowerCase()) : 'C';
+                    const cHex = CPK_COLORS[key] || CPK_COLORS[a.element] || 0xC8C8C8;
+                    a.mesh.material.color.setHex(cHex);
+                });
+                updateBuilderHud();
+                return;
+            }
+
+            btn.style.background = "#ff8000";
+            btn.style.color = "#000";
+
+            const sdf = exportBuilderToSDFText();
+            if (!sdf) return;
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/calculate_charges', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sdf: sdf })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const charges = data.charges || [];
+
+                    let maxAbsQ = 0.001;
+                    builderAtoms.forEach((atom, idx) => {
+                        const q = charges[idx] !== undefined ? charges[idx] : 0.0;
+                        if (Math.abs(q) > maxAbsQ) maxAbsQ = Math.abs(q);
+                    });
+                    maxAbsQ = Math.max(maxAbsQ, 0.25);
+
+                    builderAtoms.forEach((atom, idx) => {
+                        const q = charges[idx] !== undefined ? charges[idx] : 0.0;
+                        atom.mesh.userData.charge = q;
+                        const normQ = THREE.MathUtils.clamp(q / maxAbsQ, -1.0, 1.0);
+
+                        const c = new THREE.Color();
+                        if (normQ >= 0) {
+                            const t = normQ;
+                            c.setRGB(1.0 - t * 0.9, 1.0 - t * 0.7, 1.0);
+                        } else {
+                            const t = Math.abs(normQ);
+                            c.setRGB(1.0, 1.0 - t * 0.9, 1.0 - t * 0.9);
+                        }
+                        atom.mesh.material.color.copy(c);
+                    });
+                    updateBuilderHud();
+                }
+            } catch (e) {
+                alert("Could not compute charges: Ensure Python server is online.");
+            }
+        }
+
+        async function manageHydrogens(action) {
+            const sdf = exportBuilderToSDFText();
+            if (!sdf) return;
+
+            const hud = document.getElementById("builderHud");
+            hud.innerText = `🧪 Processing Hydrogens (${action})...`;
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/manage_hydrogens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sdf: sdf, action: action })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.sdf) {
+                        loadSDFIntoBuilder(data.sdf, false);
+                        hud.innerText = `Hydrogens Updated: ${action}`;
+                    }
+                }
+            } catch (e) {
+                alert("Hydrogen Manager requires Python server.");
+                updateBuilderHud();
+            }
+        }
+
+        async function loadSmilesToWorkspace(append = false) {
+            const smiles = document.getElementById("builderSmilesInput").value.trim();
+            if (!smiles) return;
+
+            const hud = document.getElementById("builderHud");
+            hud.innerText = "⚡ Folding SMILES into 3D conformer...";
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/generate_sdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ smiles: smiles })
+                });
+
+                if (!res.ok) throw new Error("Server failed to generate 3D conformer.");
+                const data = await res.json();
+                if (data.sdf) {
+                    loadSDFIntoBuilder(data.sdf, append);
+                    hud.innerText = `Loaded 3D Conformer for: ${smiles}`;
+                }
+            } catch (e) {
+                alert("SMILES Loader Error: " + e.message);
+                updateBuilderHud();
+            }
+        }
+
+        function export4KTransparentPNG() {
+            if (builderAtoms.length === 0) return;
+
+            const container = document.getElementById("builder-canvas-container");
+            const origW = container.clientWidth;
+            const origH = container.clientHeight;
+
+            const targetW = 3840;
+            const targetH = 2160;
+
+            builderRenderer.setSize(targetW, targetH, false);
+            builderCamera.aspect = targetW / targetH;
+            builderCamera.updateProjectionMatrix();
+
+            const origBg = builderScene.background;
+            builderScene.background = null;
+            gridHelper.visible = false;
+            transformControls.visible = false;
+
+            builderRenderer.render(builderScene, builderCamera);
+            const dataUrl = builderRenderer.domElement.toDataURL("image/png");
+
+            builderScene.background = origBg;
+            gridHelper.visible = true;
+            transformControls.visible = true;
+            builderRenderer.setSize(origW, origH);
+            builderCamera.aspect = origW / origH;
+            builderCamera.updateProjectionMatrix();
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `publication_render_${Date.now()}.png`;
+            a.click();
+        }
+
+        function handleCrystallographyUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const stripSolvents = document.getElementById("stripSolventToggle").checked;
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                const content = e.target.result;
+                const hud = document.getElementById("builderHud");
+                hud.innerText = `💎 Loading ${file.name}...`;
+
+                try {
+                    const res = await fetch('http://127.0.0.1:5000/api/import_crystallography', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: content, format: ext, strip_solvents: stripSolvents })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "Failed to parse crystal structure.");
+                    }
+
+                    const data = await res.json();
+                    if (data.sdf) {
+                        loadSDFIntoBuilder(data.sdf, false);
+                        hud.innerText = `Loaded Crystal Structure: ${file.name}`;
+                    }
+                } catch (err) {
+                    alert("Crystallography Import Error: " + err.message);
+                    updateBuilderHud();
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleGizmoMode() {
+            const current = transformControls.getMode();
+            const next = (current === 'translate') ? 'rotate' : 'translate';
+            transformControls.setMode(next);
+            gizmoPivot.quaternion.identity();
+            
+            const btn = document.getElementById('btn-gizmo-mode');
+            if (btn) {
+                if (currentLang === 'ru') {
+                    btn.innerText = (next === 'translate') ? '🔄 [R] Режим: Перемещение' : '🔄 [R] Режим: Вращение';
+                } else {
+                    btn.innerText = (next === 'translate') ? '🔄 [R] Mode: Translate' : '🔄 [R] Mode: Rotate';
+                }
+            }
+            updateBuilderHud();
+        }
+
+        function buildWorkspaceFloor(size) {
+            if (gridHelper) builderScene.remove(gridHelper);
+            if (groundPlaneMesh) builderScene.remove(groundPlaneMesh);
+
+            gridHelper = new THREE.GridHelper(size, size, 0x00E5FF, 0x333333);
+            gridHelper.position.y = -0.01;
+            builderScene.add(gridHelper);
+
+            const planeGeo = new THREE.PlaneGeometry(size * 2, size * 2);
+            planeGeo.rotateX(-Math.PI / 2);
+            groundPlaneMesh = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ visible: false }));
+            builderScene.add(groundPlaneMesh);
+        }
+
+        function updateGridSize(newSize) {
+            if (isNaN(newSize) || newSize < 5) newSize = 30;
+            currentGridSize = newSize;
+            buildWorkspaceFloor(currentGridSize);
+            updateBuilderHud();
+        }
+
+        function onBuilderWindowResize() {
+            const container = document.getElementById("builder-canvas-container");
+            if (!container || !builderRenderer) return;
+            builderCamera.aspect = container.clientWidth / container.clientHeight;
+            builderCamera.updateProjectionMatrix();
+            builderRenderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function setBuilderTool(tool) {
+            builderTool = tool;
+            ['select', 'add', 'bond'].forEach(t => {
+                const btn = document.getElementById(`btn-tool-${t}`);
+                if (btn) btn.classList.toggle('active', t === tool);
+            });
+            if (tool !== 'select') transformControls.detach();
+            else if (selectedAtomsOrder.length > 0) repositionGizmo();
+            updateBuilderHud();
+        }
+
+        function setBuilderBondOrder(order) {
+            selectedBondOrder = order;
+            [1, 2, 3].forEach(o => {
+                const btn = document.getElementById(`btn-bond-${o}`);
+                if (btn) btn.classList.toggle('active', o === order);
+            });
+            updateBuilderHud();
+        }
+
+        function updateBuilderHud() {
+            const hud = document.getElementById("builderHud");
+            if (!hud) return;
+            let gizmoLabel = transformControls ? transformControls.getMode().toUpperCase() : 'TRANSLATE';
+            let chargeLabel = showingGasteigerCharges && selectedAtomsOrder.length === 1 ? ` | Charge: ${selectedAtomsOrder[0].mesh.userData.charge} e` : '';
+            if (currentLang === 'ru') {
+                hud.innerText = `Атомов: ${builderAtoms.length} | Выбрано: ${selectedAtomsOrder.length} | Инструмент: [${builderTool.toUpperCase()}] | Гизмо: [${gizmoLabel}] | Связь: ${selectedBondOrder} | Сетка: ${currentGridSize}м${chargeLabel}`;
+            } else {
+                hud.innerText = `Atoms: ${builderAtoms.length} | Selected: ${selectedAtomsOrder.length} | Tool: [${builderTool.toUpperCase()}] | Gizmo: [${gizmoLabel}] | Order: ${selectedBondOrder} | Floor: ${currentGridSize}m${chargeLabel}`;
+            }
+        }
+
+        function getBuilderIntersects(clientX, clientY, targetObjects) {
+            const rect = builderRenderer.domElement.getBoundingClientRect();
+            builderMouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            builderMouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+            builderRaycaster.setFromCamera(builderMouse, builderCamera);
+            return builderRaycaster.intersectObjects(targetObjects, true);
+        }
+
+        function onBuilderPointerDown(event) {
+            if (event.button !== 0) return;
+
+            if (transformControls.dragging || (transformControls.axis !== null && transformControls.axis !== undefined)) return;
+
+            const atomMeshes = builderAtoms.map(a => a.mesh);
+            const hits = getBuilderIntersects(event.clientX, event.clientY, atomMeshes);
+
+            if (builderTool === 'add') {
+                if (hits.length > 0) {
+                    const hitAtom = builderAtoms.find(a => a.mesh === hits[0].object);
+                    const norm = hits[0].face.normal.clone().multiplyScalar(1.5);
+                    const pos = hitAtom.mesh.position.clone().add(norm);
+                    const newAtom = addBuilderAtom(selectedElement, pos.x, pos.y, pos.z);
+                    addBuilderBond(hitAtom, newAtom, selectedBondOrder);
+                } else {
+                    const groundHits = getBuilderIntersects(event.clientX, event.clientY, [groundPlaneMesh]);
+                    if (groundHits.length > 0) {
+                        const pt = groundHits[0].point;
+                        addBuilderAtom(selectedElement, pt.x, 0.6, pt.z);
+                    }
+                }
+                updateGeometricMeasurement();
+                return;
+            }
+
+            if (builderTool === 'bond') {
+                if (hits.length > 0) {
+                    const targetAtom = builderAtoms.find(a => a.mesh === hits[0].object);
+                    if (selectedAtomsOrder.length > 0) {
+                        selectedAtomsOrder.forEach(srcAtom => {
+                            if (srcAtom !== targetAtom) addBuilderBond(srcAtom, targetAtom, selectedBondOrder);
+                        });
+                        clearSelection();
+                    } else {
+                        selectAtom(targetAtom, false);
+                    }
+                }
+                return;
+            }
+
+            if (builderTool === 'select') {
+                if (hits.length > 0) {
+                    const clickedAtom = builderAtoms.find(a => a.mesh === hits[0].object);
+
+                    if (!event.shiftKey) {
+                        clearSelection();
+                        selectAtom(clickedAtom, true);
+                    } else {
+                        const idx = selectedAtomsOrder.indexOf(clickedAtom);
+                        if (idx !== -1) {
+                            deselectAtom(clickedAtom);
+                        } else {
+                            if (selectedAtomsOrder.length >= 4) {
+                                deselectAtom(selectedAtomsOrder[0]);
+                            }
+                            selectAtom(clickedAtom, true);
+                        }
+                    }
+                    repositionGizmo();
+                } else {
+                    if (!event.shiftKey) clearSelection();
+                    transformControls.detach();
+                    isBoxSelecting = true;
+                    const wrapper = document.getElementById("canvas-wrapper").getBoundingClientRect();
+                    boxStartX = event.clientX - wrapper.left;
+                    boxStartY = event.clientY - wrapper.top;
+                    const box = document.getElementById("selection-box");
+                    box.style.left = `${boxStartX}px`;
+                    box.style.top = `${boxStartY}px`;
+                    box.style.width = '0px';
+                    box.style.height = '0px';
+                    box.style.display = 'block';
+                }
+            }
+        }
+
+        function onBuilderPointerMove(event) {
+            if (isBoxSelecting) {
+                const wrapper = document.getElementById("canvas-wrapper").getBoundingClientRect();
+                const curX = event.clientX - wrapper.left;
+                const curY = event.clientY - wrapper.top;
+                const left = Math.min(boxStartX, curX);
+                const top = Math.min(boxStartY, curY);
+                const width = Math.abs(curX - boxStartX);
+                const height = Math.abs(curY - boxStartY);
+                const box = document.getElementById("selection-box");
+                box.style.left = `${left}px`;
+                box.style.top = `${top}px`;
+                box.style.width = `${width}px`;
+                box.style.height = `${height}px`;
+            }
+        }
+
+        function onBuilderPointerUp(event) {
+            if (isBoxSelecting) {
+                isBoxSelecting = false;
+                const box = document.getElementById("selection-box");
+                box.style.display = 'none';
+
+                const rect = builderRenderer.domElement.getBoundingClientRect();
+                const wrapper = document.getElementById("canvas-wrapper").getBoundingClientRect();
+                const endX = event.clientX - wrapper.left;
+                const endY = event.clientY - wrapper.top;
+
+                const minX = Math.min(boxStartX, endX);
+                const maxX = Math.max(boxStartX, endX);
+                const minY = Math.min(boxStartY, endY);
+                const maxY = Math.max(boxStartY, endY);
+
+                if (Math.abs(maxX - minX) > 4 || Math.abs(maxY - minY) > 4) {
+                    builderAtoms.forEach(atom => {
+                        const proj = atom.mesh.position.clone().project(builderCamera);
+                        const sx = (proj.x * 0.5 + 0.5) * rect.width;
+                        const sy = (-(proj.y * 0.5) + 0.5) * rect.height;
+                        if (sx >= minX && sx <= maxX && sy >= minY && sy <= maxY && proj.z < 1) {
+                            if (!selectedAtomsOrder.includes(atom)) selectAtom(atom, true);
+                        }
+                    });
+                    repositionGizmo();
+                }
+            }
+        }
+
+        function selectAtom(atom, append = false) {
+            if (!append) clearSelection();
+            if (!selectedAtomsOrder.includes(atom)) selectedAtomsOrder.push(atom);
+            atom.mesh.material.emissive.setHex(0x00E5FF);
+            atom.mesh.material.emissiveIntensity = 0.5;
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function deselectAtom(atom) {
+            const idx = selectedAtomsOrder.indexOf(atom);
+            if (idx !== -1) selectedAtomsOrder.splice(idx, 1);
+            atom.mesh.material.emissive.setHex(0x000000);
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function clearSelection() {
+            selectedAtomsOrder.forEach(a => a.mesh.material.emissive.setHex(0x000000));
+            selectedAtomsOrder = [];
+            transformControls.detach();
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function repositionGizmo() {
+            if (selectedAtomsOrder.length === 0) {
+                transformControls.detach();
+                return;
+            }
+            const centroid = new THREE.Vector3();
+            selectedAtomsOrder.forEach(a => centroid.add(a.mesh.position));
+            centroid.divideScalar(selectedAtomsOrder.length);
+            gizmoPivot.position.copy(centroid);
+            gizmoPivot.quaternion.identity();
+            transformControls.attach(gizmoPivot);
+        }
+
+        function addBuilderAtom(element, x, y, z) {
+            const mesh = createAtomMesh(element, x, y, z);
+            builderScene.add(mesh);
+            const atomObj = { id: Date.now() + Math.random(), element: element, mesh: mesh };
+            builderAtoms.push(atomObj);
+            updateBuilderHud();
+            updateGeometricMeasurement();
+            return atomObj;
+        }
+
+        function addBuilderBond(atom1, atom2, order) {
+            const exists = builderBonds.find(b => (b.atom1 === atom1 && b.atom2 === atom2) || (b.atom1 === atom2 && b.atom2 === atom1));
+            if (exists) {
+                exists.order = order;
+                builderScene.remove(exists.mesh);
+                exists.mesh = createBondMesh(atom1.mesh.position, atom2.mesh.position, order);
+                builderScene.add(exists.mesh);
+                return;
+            }
+            const bondMesh = createBondMesh(atom1.mesh.position, atom2.mesh.position, order);
+            builderScene.add(bondMesh);
+            builderBonds.push({ atom1, atom2, order, mesh: bondMesh });
+            updateBuilderHud();
+        }
+
+        function removeBuilderBond(bondObj) {
+            builderScene.remove(bondObj.mesh);
+            builderBonds = builderBonds.filter(b => b !== bondObj);
+            updateBuilderHud();
+        }
+
+        function updateBondsForAtom(atomObj) {
+            builderBonds.forEach(b => {
+                if (b.atom1 === atomObj || b.atom2 === atomObj) {
+                    builderScene.remove(b.mesh);
+                    b.mesh = createBondMesh(b.atom1.mesh.position, b.atom2.mesh.position, b.order);
+                    builderScene.add(b.mesh);
+                }
+            });
+        }
+
+        function deleteSelectedAtoms() {
+            selectedAtomsOrder.forEach(atom => {
+                const connectedBonds = builderBonds.filter(b => b.atom1 === atom || b.atom2 === atom);
+                connectedBonds.forEach(b => removeBuilderBond(b));
+                builderScene.remove(atom.mesh);
+                builderAtoms = builderAtoms.filter(a => a !== atom);
+            });
+            clearSelection();
+            updateBuilderHud();
+            updateGeometricMeasurement();
+        }
+
+        function clearBuilderScene() {
+            clearSelection();
+            builderAtoms.forEach(a => builderScene.remove(a.mesh));
+            builderBonds.forEach(b => builderScene.remove(b.mesh));
+            builderAtoms = [];
+            builderBonds = [];
+            cachedIsomers = [];
+            document.getElementById('btn-next-isomer').style.display = 'none';
+            document.getElementById('measureBadge').style.display = 'none';
+            clearMeasureLines();
+            updateBuilderHud();
+        }
+
+        async function autoBondStructure() {
+            if (builderAtoms.length === 0) return;
+
+            const sdf = exportBuilderToSDFText();
+            const elements = builderAtoms.map(a => a.element);
+            const has_bonds = builderBonds.length > 0;
+
+            const hud = document.getElementById("builderHud");
+            hud.innerText = "⚡ Solving chemical isomers & calculating true 3D geometry...";
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/auto_bond', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ elements: elements, sdf: sdf, has_bonds: has_bonds })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Auto-Bond failed.");
+                }
+
+                const data = await res.json();
+                cachedIsomers = data.isomers || [];
+                currentIsomerIndex = 0;
+
+                if (cachedIsomers.length > 0) {
+                    applyIsomerConfiguration(0);
+                    const nextBtn = document.getElementById('btn-next-isomer');
+                    if (cachedIsomers.length > 1) {
+                        nextBtn.style.display = 'inline-flex';
+                        document.getElementById('isomerIndexLabel').innerText = `1/${cachedIsomers.length}`;
+                    } else nextBtn.style.display = 'none';
+                }
+            } catch(e) {
+                alert("Auto-Bond Error: " + e.message);
+                updateBuilderHud();
+            }
+        }
+
+        function cycleNextIsomer() {
+            if (cachedIsomers.length < 2) return;
+            currentIsomerIndex = (currentIsomerIndex + 1) % cachedIsomers.length;
+            applyIsomerConfiguration(currentIsomerIndex);
+            document.getElementById('isomerIndexLabel').innerText = `${currentIsomerIndex + 1}/${cachedIsomers.length}`;
+        }
+
+        function applyIsomerConfiguration(idx) {
+            const isomer = cachedIsomers[idx];
+            if (!isomer || !isomer.sdf) return;
+            loadSDFIntoBuilder(isomer.sdf, false);
+            const hud = document.getElementById("builderHud");
+            hud.innerText = `Configuration: ${isomer.name} (${isomer.smiles})`;
+        }
+
+        function exportBuilderToSDFText() {
+            if (builderAtoms.length === 0) return "";
+            const numAtoms = builderAtoms.length;
+            const numBonds = builderBonds.length;
+            const pad = (num, size) => (num + "").padStart(size, " ");
+            const padCoord = (val) => val.toFixed(4).padStart(10, " ");
+
+            let out = "GeneratedByAceBuilder\n  ACE_3D    00000000002D\n\n";
+            out += pad(numAtoms, 3) + pad(numBonds, 3) + "  0  0  0  0  0  0  0  0999 V2000\n";
+            
+            for (let i = 0; i < numAtoms; i++) {
+                const a = builderAtoms[i];
+                let el = a.element.padEnd(3, " ");
+                out += padCoord(a.mesh.position.x) + padCoord(a.mesh.position.y) + padCoord(a.mesh.position.z) + " " + el + " 0  0  0  0  0  0  0  0  0  0  0  0\n";
+            }
+            for (let i = 0; i < numBonds; i++) {
+                const b = builderBonds[i];
+                const idx1 = builderAtoms.indexOf(b.atom1) + 1;
+                const idx2 = builderAtoms.indexOf(b.atom2) + 1;
+                out += pad(idx1, 3) + pad(idx2, 3) + pad(b.order, 3) + "  0  0  0  0\n";
+            }
+            out += "M  END\n$$$$\n";
+            return out;
+        }
+
+        function downloadBuilderSDF() {
+            const sdf = exportBuilderToSDFText();
+            if (!sdf) return;
+            const blob = new Blob([sdf], { type: 'chemical/x-mdl-sdfile' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `custom_compound_${Date.now()}.sdf`;
+            a.click();
+        }
+
+        function loadSDFIntoBuilder(sdfText, append = false) {
+            if (!sdfText) return;
+            if (!append) clearBuilderScene();
+            
+            const lines = sdfText.split('\n');
+            if (lines.length < 4) return;
+            
+            let offset = append ? new THREE.Vector3(Math.random() * 4 + 2, 0, Math.random() * 4 + 2) : new THREE.Vector3(0, 0, 0);
+            let importedAtoms = [];
+
+            if (lines[3].includes("V3000")) {
+                let inAtoms = false, inBonds = false;
+                for (let i = 4; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line.startsWith("M  V30 BEGIN ATOM")) { inAtoms = true; continue; }
+                    if (line.startsWith("M  V30 END ATOM")) { inAtoms = false; continue; }
+                    if (line.startsWith("M  V30 BEGIN BOND")) { inBonds = true; continue; }
+                    if (line.startsWith("M  V30 END BOND")) { inBonds = false; continue; }
+
+                    if (inAtoms && line.startsWith("M  V30 ")) {
+                        const parts = line.split(/\s+/);
+                        const atomObj = addBuilderAtom(parts[3], parseFloat(parts[4]) + offset.x, parseFloat(parts[5]) + offset.y, parseFloat(parts[6]) + offset.z);
+                        importedAtoms.push(atomObj);
+                    } else if (inBonds && line.startsWith("M  V30 ")) {
+                        const parts = line.split(/\s+/);
+                        const order = parseInt(parts[3]);
+                        const a1 = parseInt(parts[4]) - 1;
+                        const a2 = parseInt(parts[5]) - 1;
+                        if (importedAtoms[a1] && importedAtoms[a2]) {
+                            addBuilderBond(importedAtoms[a1], importedAtoms[a2], order);
+                        }
+                    }
+                }
+                updateGeometricMeasurement();
+                return;
+            }
+
+            let numAtoms = 0, numBonds = 0;
+            if (lines[3].length >= 6) {
+                numAtoms = parseInt(lines[3].substring(0, 3).trim());
+                numBonds = parseInt(lines[3].substring(3, 6).trim());
+            }
+            if (isNaN(numAtoms) || isNaN(numBonds)) {
+                const counts = lines[3].trim().split(/\s+/);
+                numAtoms = parseInt(counts[0]);
+                numBonds = parseInt(counts[1]);
+            }
+
+            let lineIdx = 4;
+            for (let i = 0; i < numAtoms; i++) {
+                const l = lines[lineIdx++];
+                if (!l || l.length < 30) continue; 
+                const parts = l.trim().split(/\s+/);
+                const x = parseFloat(parts[0]) + offset.x;
+                const y = parseFloat(parts[1]) + offset.y;
+                const z = parseFloat(parts[2]) + offset.z;
+                const el = parts[3];
+                const atomObj = addBuilderAtom(el, x, y, z);
+                importedAtoms.push(atomObj);
+            }
+
+            for (let i = 0; i < numBonds; i++) {
+                const l = lines[lineIdx++];
+                if (!l || l.length < 6) continue; 
+                const parts = l.trim().split(/\s+/);
+                const a1 = parseInt(parts[0]) - 1;
+                const a2 = parseInt(parts[1]) - 1;
+                const order = parseInt(parts[2]);
+                if (importedAtoms[a1] && importedAtoms[a2]) {
+                    addBuilderBond(importedAtoms[a1], importedAtoms[a2], order);
+                }
+            }
+            updateGeometricMeasurement();
+        }
+
+        function handleBuilderUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => loadSDFIntoBuilder(e.target.result, false);
+            reader.readAsText(file);
+        }
+
+        async function analyzeBuilderStructure() {
+            const sdf = exportBuilderToSDFText();
+            if (!sdf) return;
+
+            const panel = document.getElementById("builderAnalysisPanel");
+            panel.style.display = "block";
+
+            // Специальная пасхалка при анализе молекулы "Соседи" (He—Fr)
+            const elems = builderAtoms.map(a => a.element).sort().join('');
+            if (elems === 'FrHe' && builderBonds.length >= 1) {
+                document.getElementById("builderOutSmiles").innerText = "[He]-[Fr]";
+                document.getElementById("builderOutName").innerText = currentLang === 'ru' ? "Гелид франция (Комплекс «Соседи»)" : "Francium Helide ('Neighbors' Complex)";
+                document.getElementById("builderOutFormula").innerText = "HeFr";
+                document.getElementById("builderOutWeight").innerText = "227.023";
+                document.getElementById("builderOutWiki").innerHTML = currentLang === 'ru'
+                    ? "<b>Эксклюзивное соединение «Соседи» (He—Fr):</b> Союз самого инертного благородного газа Гелия (№2) и самого активного щелочного металла Франция (№87) — соседей по таблице при переходе между периодами! Поздравляем Кирилла Михайловича с Днём Рождения! 🎉"
+                    : "<b>Exclusive 'Neighbors' Complex (He—Fr):</b> A theoretical union of the noblest gas Helium (#2) and the most reactive alkali metal Francium (#87)! Happy Birthday, Kirill Mikhailovich! 🎉";
+                launchConfettiSalute();
+                return;
+            }
+
+            document.getElementById("builderOutSmiles").innerText = "Deriving Canonical SMILES...";
+            document.getElementById("builderOutName").innerText = "Identifying...";
+            document.getElementById("builderOutFormula").innerText = "-";
+            document.getElementById("builderOutWeight").innerText = "-";
+            document.getElementById("builderOutWiki").innerText = "Searching chemical databases...";
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/sdf_to_smiles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sdf: sdf })
+                });
+                
+                if (!res.ok) throw new Error("Could not parse structure via RDKit.");
+                const data = await res.json();
+                const smiles = data.smiles;
+                
+                document.getElementById("builderOutSmiles").innerText = smiles;
+                document.getElementById("builderOutFormula").innerText = data.formula || "-";
+                document.getElementById("builderOutWeight").innerText = data.weight || "-";
+
+                const pubChemData = await smartChemFetch(smiles, true);
+                if (pubChemData && pubChemData.IUPACName && pubChemData.IUPACName !== "Complex Target (Python Engine)") {
+                    document.getElementById("builderOutName").innerText = pubChemData.IUPACName;
+                    fetchWikiForBuilder(pubChemData.IUPACName);
+                } else {
+                    document.getElementById("builderOutName").innerText = currentLang === 'ru' ? "Новое / Кастомное соединение" : "Novel / Custom Structure";
+                    document.getElementById("builderOutWiki").innerText = currentLang === 'ru' ? "Этот структурный изомер отсутствует в стандартных справочниках Википедии." : "This exact structural isomer is not listed in standard Wikipedia references.";
+                }
+            } catch (e) {
+                document.getElementById("builderOutSmiles").innerText = "Error: Ensure Python server is online (http://127.0.0.1:5000)";
+            }
+        }
+
+        async function fetchWikiForBuilder(title) {
+            const wikiLang = currentLang === 'ru' ? 'ru' : 'en';
+            try {
+                const res = await fetch(`https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                let extract = data.extract || "No Wikipedia facts found.";
+                if(extract.length > 350) extract = extract.substring(0, 350) + "...";
+                document.getElementById("builderOutWiki").innerHTML = `<i>" ${extract} "</i><br><br><a href="${data.content_urls.desktop.page}" target="_blank" style="color: var(--accent-color); font-weight: bold; text-decoration: none;">Wikipedia ➔</a>`;
+            } catch(e) {
+                document.getElementById("builderOutWiki").innerText = currentLang === 'ru' ? "Статья в Википедии для данного изомера отсутствует." : "Wikipedia article not available for this specific compound.";
+            }
+        }
+
+        function copyBuilderSmiles() {
+            const sm = document.getElementById("builderOutSmiles").innerText;
+            if (sm && sm !== "-") navigator.clipboard.writeText(sm);
+        }
+
+        async function insertPresetSMILES(smiles) {
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/generate_sdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ smiles: smiles })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.sdf) loadSDFIntoBuilder(data.sdf, builderAtoms.length > 0);
+                }
+            } catch (e) {
+                alert("Fragment insertion requires Python server.");
+            }
+        }
+
+        function saveCurrentAsCustomPreset() {
+            const sdf = exportBuilderToSDFText();
+            if (!sdf) return;
+            const name = prompt(currentLang === 'ru' ? "Введите название для этого фрагмента:" : "Enter a label for this custom fragment:", "Custom Ligand");
+            if (!name) return;
+
+            let presets = JSON.parse(localStorage.getItem('ace_custom_presets') || "[]");
+            presets.push({ id: Date.now(), name: name, sdf: sdf });
+            localStorage.setItem('ace_custom_presets', JSON.stringify(presets));
+            renderCustomPresets();
+        }
+
+        function deleteCustomPreset(id, event) {
+            event.stopPropagation();
+            let presets = JSON.parse(localStorage.getItem('ace_custom_presets') || "[]");
+            presets = presets.filter(p => p.id !== id);
+            localStorage.setItem('ace_custom_presets', JSON.stringify(presets));
+            renderCustomPresets();
+        }
+
+        function renderCustomPresets() {
+            const container = document.getElementById("custom-presets-container");
+            const presets = JSON.parse(localStorage.getItem('ace_custom_presets') || "[]");
+            container.innerHTML = "";
+            if (presets.length === 0) return;
+
+            presets.forEach(p => {
+                const badge = document.createElement("span");
+                badge.className = "preset-badge";
+                badge.style.borderColor = "var(--accent-color)";
+                badge.innerHTML = `⭐ ${p.name} <span class="preset-del" title="Delete preset">&times;</span>`;
+                badge.onclick = () => loadSDFIntoBuilder(p.sdf, builderAtoms.length > 0);
+                badge.querySelector('.preset-del').onclick = (e) => deleteCustomPreset(p.id, e);
+                container.appendChild(badge);
+            });
+        }
+
+        function renderHotbar() {
+            const container = document.getElementById("hotbar-elements-container");
+            container.innerHTML = "";
+
+            hotbarElements.forEach(sym => {
+                const btn = document.createElement("button");
+                btn.className = `hotbar-elem-btn ${sym === selectedElement ? 'active' : ''}`;
+                
+                const key = sym ? (sym.charAt(0).toUpperCase() + sym.slice(1).toLowerCase()) : 'C';
+                const cHex = CPK_COLORS[key] ? '#' + CPK_COLORS[key].toString(16).padStart(6, '0') : '#aaa';
+                
+                btn.innerHTML = `<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${cHex}; margin-right:3px; border:1px solid #444;"></span>${sym} <span class="hotbar-elem-del" title="Unpin">&times;</span>`;
+                
+                btn.onclick = (e) => {
+                    if (e.target.classList.contains('hotbar-elem-del')) {
+                        removeElementFromHotbar(sym, e);
+                    } else {
+                        selectHotbarElement(sym);
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function selectHotbarElement(sym) {
+            selectedElement = sym;
+            renderHotbar();
+            setBuilderTool('add');
+            updateBuilderHud();
+        }
+
+        function addElementToHotbar(sym) {
+            if (!hotbarElements.includes(sym)) {
+                hotbarElements.push(sym);
+                localStorage.setItem('ace_hotbar_elements', JSON.stringify(hotbarElements));
+            }
+            selectHotbarElement(sym);
+        }
+
+        function removeElementFromHotbar(sym, event) {
+            event.stopPropagation();
+            if (hotbarElements.length <= 1) return;
+            hotbarElements = hotbarElements.filter(s => s !== sym);
+            localStorage.setItem('ace_hotbar_elements', JSON.stringify(hotbarElements));
+            if (selectedElement === sym) selectedElement = hotbarElements[0];
+            renderHotbar();
+            updateBuilderHud();
+        }
+
+        function openPeriodicModal() {
+            document.getElementById("periodic-modal").style.display = "flex";
+        }
+
+        function closePeriodicModal() {
+            document.getElementById("periodic-modal").style.display = "none";
+        }
+
+        const PERIODIC_TABLE_DATA = [
+            {n:1, s:'H', r:1, c:1}, {n:2, s:'He', r:1, c:18},
+            {n:3, s:'Li', r:2, c:1}, {n:4, s:'Be', r:2, c:2}, {n:5, s:'B', r:2, c:13}, {n:6, s:'C', r:2, c:14}, {n:7, s:'N', r:2, c:15}, {n:8, s:'O', r:2, c:16}, {n:9, s:'F', r:2, c:17}, {n:10, s:'Ne', r:2, c:18},
+            {n:11, s:'Na', r:3, c:1}, {n:12, s:'Mg', r:3, c:2}, {n:13, s:'Al', r:3, c:13}, {n:14, s:'Si', r:3, c:14}, {n:15, s:'P', r:3, c:15}, {n:16, s:'S', r:3, c:16}, {n:17, s:'Cl', r:3, c:17}, {n:18, s:'Ar', r:3, c:18},
+            {n:19, s:'K', r:4, c:1}, {n:20, s:'Ca', r:4, c:2}, {n:21, s:'Sc', r:4, c:3}, {n:22, s:'Ti', r:4, c:4}, {n:23, s:'V', r:4, c:5}, {n:24, s:'Cr', r:4, c:6}, {n:25, s:'Mn', r:4, c:7}, {n:26, s:'Fe', r:4, c:8}, {n:27, s:'Co', r:4, c:9}, {n:28, s:'Ni', r:4, c:10}, {n:29, s:'Cu', r:4, c:11}, {n:30, s:'Zn', r:4, c:12}, {n:31, s:'Ga', r:4, c:13}, {n:32, s:'Ge', r:4, c:14}, {n:33, s:'As', r:4, c:15}, {n:34, s:'Se', r:4, c:16}, {n:35, s:'Br', r:4, c:17}, {n:36, s:'Kr', r:4, c:18},
+            {n:37, s:'Rb', r:5, c:1}, {n:38, s:'Sr', r:5, c:2}, {n:39, s:'Y', r:5, c:3}, {n:40, s:'Zr', r:5, c:4}, {n:41, s:'Nb', r:5, c:5}, {n:42, s:'Mo', r:5, c:6}, {n:43, s:'Tc', r:5, c:7}, {n:44, s:'Ru', r:5, c:8}, {n:45, s:'Rh', r:5, c:9}, {n:46, s:'Pd', r:5, c:10}, {n:47, s:'Ag', r:5, c:11}, {n:48, s:'Cd', r:5, c:12}, {n:49, s:'In', r:5, c:13}, {n:50, s:'Sn', r:5, c:14}, {n:51, s:'Sb', r:5, c:15}, {n:52, s:'Te', r:5, c:16}, {n:53, s:'I', r:5, c:17}, {n:54, s:'Xe', r:5, c:18},
+            {n:55, s:'Cs', r:6, c:1}, {n:56, s:'Ba', r:6, c:2}, {n:57, s:'La', r:9, c:3}, {n:58, s:'Ce', r:9, c:4}, {n:59, s:'Pr', r:9, c:5}, {n:60, s:'Nd', r:9, c:6}, {n:61, s:'Pm', r:9, c:7}, {n:62, s:'Sm', r:9, c:8}, {n:63, s:'Eu', r:9, c:9}, {n:64, s:'Gd', r:9, c:10}, {n:65, s:'Tb', r:9, c:11}, {n:66, s:'Dy', r:9, c:12}, {n:67, s:'Ho', r:9, c:13}, {n:68, s:'Er', r:9, c:14}, {n:69, s:'Tm', r:9, c:15}, {n:70, s:'Yb', r:9, c:16}, {n:71, s:'Lu', r:9, c:17}, {n:72, s:'Hf', r:6, c:4}, {n:73, s:'Ta', r:6, c:5}, {n:74, s:'W', r:6, c:6}, {n:75, s:'Re', r:6, c:7}, {n:76, s:'Os', r:6, c:8}, {n:77, s:'Ir', r:6, c:9}, {n:78, s:'Pt', r:6, c:10}, {n:79, s:'Au', r:6, c:11}, {n:80, s:'Hg', r:6, c:12}, {n:81, s:'Tl', r:6, c:13}, {n:82, s:'Pb', r:6, c:14}, {n:83, s:'Bi', r:6, c:15}, {n:84, s:'Po', r:6, c:16}, {n:85, s:'At', r:6, c:17}, {n:86, s:'Rn', r:6, c:18},
+            {n:87, s:'Fr', r:7, c:1}, {n:88, s:'Ra', r:7, c:2}, {n:89, s:'Ac', r:10, c:3}, {n:90, s:'Th', r:10, c:4}, {n:91, s:'Pa', r:10, c:5}, {n:92, s:'U', r:10, c:6}, {n:93, s:'Np', r:10, c:7}, {n:94, s:'Pu', r:10, c:8}, {n:95, s:'Am', r:10, c:9}, {n:96, s:'Cm', r:10, c:10}, {n:97, s:'Bk', r:10, c:11}, {n:98, s:'Cf', r:10, c:12}, {n:99, s:'Es', r:10, c:13}, {n:100, s:'Fm', r:10, c:14}, {n:101, s:'Md', r:10, c:15}, {n:102, s:'No', r:10, c:16}, {n:103, s:'Lr', r:10, c:17}, {n:104, s:'Rf', r:7, c:4}, {n:105, s:'Db', r:7, c:5}, {n:106, s:'Sg', r:7, c:6}, {n:107, s:'Bh', r:7, c:7}, {n:108, s:'Hs', r:7, c:8}, {n:109, s:'Mt', r:7, c:9}, {n:110, s:'Ds', r:7, c:10}, {n:111, s:'Rg', r:7, c:11}, {n:112, s:'Cn', r:7, c:12}, {n:113, s:'Nh', r:7, c:13}, {n:114, s:'Fl', r:7, c:14}, {n:115, s:'Mc', r:7, c:15}, {n:116, s:'Lv', r:7, c:16}, {n:117, s:'Ts', r:7, c:17}, {n:118, s:'Og', r:7, c:18}
+        ];
+
+        function buildPeriodicTableGrid() {
+            const grid = document.getElementById("ptable-grid-target");
+            grid.innerHTML = "";
+
+            PERIODIC_TABLE_DATA.forEach(el => {
+                const cell = document.createElement("div");
+                cell.className = "pt-cell";
+                cell.style.gridRow = el.r;
+                cell.style.gridColumn = el.c;
+                
+                const key = el.s ? (el.s.charAt(0).toUpperCase() + el.s.slice(1).toLowerCase()) : 'C';
+                const cHex = CPK_COLORS[key] ? '#' + CPK_COLORS[key].toString(16).padStart(6, '0') : '#aaa';
+                
+                cell.innerHTML = `<span class="pt-num">${el.n}</span><span class="pt-sym" style="color:${cHex}">${el.s}</span>`;
+                cell.onclick = () => {
+                    addElementToHotbar(el.s);
+                    closePeriodicModal();
+                };
+                grid.appendChild(cell);
+            });
+        }
+    </script>
+</body>
+</html>
