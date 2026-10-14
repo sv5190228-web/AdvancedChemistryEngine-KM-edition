@@ -1,3 +1,4 @@
+import os
 import traceback
 import base64
 import urllib.request
@@ -13,43 +14,44 @@ from rdkit.Chem.Draw import rdMolDraw2D
 app = Flask(__name__)
 CORS(app)
 
-APP_VERSION = "3.5.0-KM-Birthday-Edition"
+APP_VERSION = "3.6.0-KM-Birthday-Pro"
 
 COMMON_ISOMERS = {
     "C2H6O": [
-        {"name": "Ethanol", "smiles": "CCO"},
-        {"name": "Dimethyl ether", "smiles": "COC"}
+        {"name": "Ethanol (Этанол)", "smiles": "CCO"},
+        {"name": "Dimethyl ether (Диметиловый эфир)", "smiles": "COC"}
     ],
     "C3H8O": [
-        {"name": "1-Propanol", "smiles": "CCCO"},
-        {"name": "Isopropanol (2-Propanol)", "smiles": "CC(O)C"},
-        {"name": "Methoxyethane", "smiles": "CCOC"}
+        {"name": "1-Propanol (Пропанол-1)", "smiles": "CCCO"},
+        {"name": "Isopropanol (Изопропанол)", "smiles": "CC(O)C"},
+        {"name": "Methoxyethane (Мэтоксиэтан)", "smiles": "CCOC"}
     ],
     "C4H10": [
-        {"name": "n-Butane", "smiles": "CCCC"},
-        {"name": "Isobutane (2-Methylpropane)", "smiles": "CC(C)C"}
+        {"name": "n-Butane (н-Бутан)", "smiles": "CCCC"},
+        {"name": "Isobutane (Изобутан)", "smiles": "CC(C)C"}
     ],
     "C6H6": [
-        {"name": "Benzene", "smiles": "c1ccccc1"},
-        {"name": "Dewar Benzene", "smiles": "C1=CC2C=CC12"}
+        {"name": "Benzene (Бензол)", "smiles": "c1ccccc1"},
+        {"name": "Dewar Benzene (Бензол Дьюара)", "smiles": "C1=CC2C=CC12"},
+        {"name": "Prismane (Призман)", "smiles": "C12C3C1C4C2C34"}
     ],
     "CH4O": [
-        {"name": "Methanol", "smiles": "CO"}
+        {"name": "Methanol (Метанол)", "smiles": "CO"}
     ],
     "C2H4O2": [
-        {"name": "Acetic acid", "smiles": "CC(=O)O"},
-        {"name": "Methyl formate", "smiles": "COC=O"}
+        {"name": "Acetic acid (Уксусная кислота)", "smiles": "CC(=O)O"},
+        {"name": "Methyl formate (Метилформиат)", "smiles": "COC=O"}
     ],
     "C3H6O": [
-        {"name": "Acetone", "smiles": "CC(=O)C"},
-        {"name": "Propanal", "smiles": "CCC=O"},
-        {"name": "Oxetane", "smiles": "C1CCO1"}
+        {"name": "Acetone (Ацетон)", "smiles": "CC(=O)C"},
+        {"name": "Propanal (Пропаналь)", "smiles": "CCC=O"},
+        {"name": "Oxetane (Оксетан)", "smiles": "C1CCO1"}
     ],
     "FrHe": [
-        {"name": "Francium Helide (Экзотический комплекс «Соседи»)", "smiles": "[He]-[Fr]"}
+        {"name": "Francium Helide (Комплекс «Соседи»)", "smiles": "[He]-[Fr]"}
     ],
     "HeFr": [
-        {"name": "Francium Helide (Экзотический комплекс «Соседи»)", "smiles": "[He]-[Fr]"}
+        {"name": "Francium Helide (Комплекс «Соседи»)", "smiles": "[He]-[Fr]"}
     ]
 }
 
@@ -68,6 +70,12 @@ COVALENT_RADII = {
     'Fr': 2.60, 'Ra': 2.21
 }
 
+MAX_VALENCE = {
+    'H': 1, 'He': 1, 'Li': 1, 'Be': 2, 'B': 3, 'C': 4, 'N': 4, 'O': 2, 'F': 1,
+    'Na': 1, 'Mg': 2, 'Al': 3, 'Si': 4, 'P': 5, 'S': 6, 'Cl': 1,
+    'K': 1, 'Ca': 2, 'Br': 1, 'I': 1, 'Fr': 1
+}
+
 TRANSITION_METALS = {
     'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
     'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
@@ -80,27 +88,72 @@ def export_mol_block_safe(mol) -> str:
     except Exception:
         return Chem.MolToMolBlock(mol, forceV3000=False, kekulize=False)
 
-def perceive_bonds_by_covalent_radii(mol):
+def perceive_bonds_by_covalent_radii(mol, connect_distant=False):
     conf = mol.GetConformer()
     rw_mol = Chem.RWMol(mol)
-    num_atoms = mol.GetNumAtoms()
+    num_atoms = rw_mol.GetNumAtoms()
     positions = [conf.GetAtomPosition(i) for i in range(num_atoms)]
-    symbols = [mol.GetAtomWithIdx(i).GetSymbol() for i in range(num_atoms)]
+    symbols = [rw_mol.GetAtomWithIdx(i).GetSymbol() for i in range(num_atoms)]
 
+    # Проход 1: Стандартное ковалентное расстояние
     for i in range(num_atoms):
         r_i = COVALENT_RADII.get(symbols[i], 1.4)
         pos_i = positions[i]
         for j in range(i + 1, num_atoms):
             r_j = COVALENT_RADII.get(symbols[j], 1.4)
             pos_j = positions[j]
-            dx = pos_i.x - pos_j.x
-            dy = pos_i.y - pos_j.y
-            dz = pos_i.z - pos_j.z
-            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+            dist = math.sqrt((pos_i.x - pos_j.x)**2 + (pos_i.y - pos_j.y)**2 + (pos_i.z - pos_j.z)**2)
 
-            if 0.45 <= dist <= (r_i + r_j + 0.42):
+            if 0.35 <= dist <= (r_i + r_j + 0.55):
                 if rw_mol.GetBondBetweenAtoms(i, j) is None:
+                    max_i = MAX_VALENCE.get(symbols[i], 6)
+                    max_j = MAX_VALENCE.get(symbols[j], 6)
+                    if rw_mol.GetAtomWithIdx(i).GetDegree() < max_i and rw_mol.GetAtomWithIdx(j).GetDegree() < max_j:
+                        rw_mol.AddBond(i, j, Chem.BondType.SINGLE)
+
+    # Проход 2: Если пользователь расставил атомы свободно на 3D-сетке (connect_distant=True),
+    # соединяем одиночные атомы с ближайшими соседями с учетом валентности
+    if connect_distant and num_atoms > 1:
+        pairs = []
+        for i in range(num_atoms):
+            for j in range(i + 1, num_atoms):
+                pos_i, pos_j = positions[i], positions[j]
+                dist = math.sqrt((pos_i.x - pos_j.x)**2 + (pos_i.y - pos_j.y)**2 + (pos_i.z - pos_j.z)**2)
+                pairs.append((dist, i, j))
+        pairs.sort(key=lambda x: x[0])
+
+        # Сначала обеспечиваем связность для атомов со степенью 0
+        for dist, i, j in pairs:
+            if dist > 8.0:
+                continue
+            atom_i = rw_mol.GetAtomWithIdx(i)
+            atom_j = rw_mol.GetAtomWithIdx(j)
+            max_i = MAX_VALENCE.get(symbols[i], 6)
+            max_j = MAX_VALENCE.get(symbols[j], 6)
+            if rw_mol.GetBondBetweenAtoms(i, j) is None:
+                if (atom_i.GetDegree() == 0 or atom_j.GetDegree() == 0) and atom_i.GetDegree() < max_i and atom_j.GetDegree() < max_j:
                     rw_mol.AddBond(i, j, Chem.BondType.SINGLE)
+
+        # Если все еще есть несвязанные фрагменты, соединяем ближайшие доступные центры
+        frags = Chem.GetMolFrags(rw_mol.GetMol())
+        while len(frags) > 1:
+            connected_any = False
+            frag_sets = [set(f) for f in frags]
+            for dist, i, j in pairs:
+                frag_i = next(idx for idx, s in enumerate(frag_sets) if i in s)
+                frag_j = next(idx for idx, s in enumerate(frag_sets) if j in s)
+                if frag_i != frag_j:
+                    atom_i = rw_mol.GetAtomWithIdx(i)
+                    atom_j = rw_mol.GetAtomWithIdx(j)
+                    max_i = MAX_VALENCE.get(symbols[i], 6)
+                    max_j = MAX_VALENCE.get(symbols[j], 6)
+                    if atom_i.GetDegree() < max_i and atom_j.GetDegree() < max_j:
+                        rw_mol.AddBond(i, j, Chem.BondType.SINGLE)
+                        connected_any = True
+                        break
+            if not connected_any:
+                break
+            frags = Chem.GetMolFrags(rw_mol.GetMol())
 
     return rw_mol.GetMol()
 
@@ -188,6 +241,16 @@ def get_version():
         'edition': 'Kirill Mikhailovich Lyapishev Special Edition',
         'status': 'online'
     })
+
+@app.route('/api/meme_image', methods=['GET'])
+def get_meme_image():
+    for filename in ['image.png', 'image.jpg', 'image.jpeg', 'image.webp']:
+        if os.path.exists(filename):
+            with open(filename, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode('utf-8')
+            mime = 'image/png' if filename.endswith('.png') else 'image/jpeg'
+            return jsonify({'image': f"data:{mime};base64,{b64}", 'status': 'success'})
+    return jsonify({'error': 'image.png not found in directory', 'status': 'missing'}), 404
 
 @app.route('/api/generate_sdf', methods=['POST'])
 def generate_sdf():
@@ -291,7 +354,6 @@ def auto_bond():
     data = request.get_json(force=True)
     elements = data.get('elements', [])
     existing_sdf = data.get('sdf', '').strip()
-    has_bonds = data.get('has_bonds', False)
 
     if set(elements) == {'He', 'Fr'} and len(elements) == 2:
         sdf_he_fr = generate_metal_complex_sdf("[He]-[Fr]")
@@ -302,58 +364,85 @@ def auto_bond():
             'status': 'success'
         })
 
-    if has_bonds and existing_sdf:
-        try:
-            mol = Chem.MolFromMolBlock(existing_sdf, sanitize=False)
-            mol.UpdatePropertyCache(strict=False)
-            try:
-                Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
-            except Exception:
-                pass
-            
-            try:
-                ff = AllChem.UFFGetMoleculeForceField(mol)
-                if ff is not None:
-                    for atom in mol.GetAtoms():
-                        if atom.GetSymbol() in TRANSITION_METALS:
-                            ff.AddFixedPoint(atom.GetIdx())
-                    ff.Minimize(maxIts=500)
-            except Exception:
-                pass
+    result_isomers = []
 
-            clean_sdf = export_mol_block_safe(mol)
-            return jsonify({
-                'mode': 'relaxed',
-                'isomers': [{'name': 'Optimized Geometry', 'smiles': Chem.MolToSmiles(mol), 'sdf': clean_sdf}],
-                'status': 'success'
-            })
-        except Exception as e:
+    # 1. ВСЕГДА строим 3D-связи напрямую из текущих координат сцены (исправляет баг неформирования связей)
+    if existing_sdf:
+        try:
+            mol_3d = Chem.MolFromMolBlock(existing_sdf, sanitize=False, removeHs=False)
+            if mol_3d is not None and mol_3d.GetNumAtoms() > 1:
+                mol_3d = perceive_bonds_by_covalent_radii(mol_3d, connect_distant=True)
+                mol_3d.UpdatePropertyCache(strict=False)
+                try:
+                    Chem.SanitizeMol(mol_3d, Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
+                except Exception:
+                    pass
+
+                try:
+                    ff = AllChem.UFFGetMoleculeForceField(mol_3d)
+                    if ff is not None:
+                        for atom in mol_3d.GetAtoms():
+                            if atom.GetSymbol() in TRANSITION_METALS:
+                                ff.AddFixedPoint(atom.GetIdx())
+                        ff.Minimize(maxIts=400)
+                except Exception:
+                    pass
+
+                connected_sdf = export_mol_block_safe(mol_3d)
+                derived_sm = Chem.MolToSmiles(mol_3d)
+                result_isomers.append({
+                    'name': 'Собранная 3D-структура (Auto-Bonded)',
+                    'smiles': derived_sm,
+                    'sdf': connected_sdf
+                })
+        except Exception:
             traceback.print_exc()
 
+    # 2. Дополнительно ищем известные химические изомеры по брутто-формуле
     counts = {}
     for el in elements:
         counts[el] = counts.get(el, 0) + 1
 
     formula_parts = []
     if 'C' in counts:
-        formula_parts.append(f"C{counts.pop('C') if counts['C'] > 1 else ''}")
+        c_cnt = counts['C']
+        formula_parts.append(f"C{c_cnt if c_cnt > 1 else ''}")
     if 'H' in counts:
-        formula_parts.append(f"H{counts.pop('H') if counts['H'] > 1 else ''}")
+        h_cnt = counts['H']
+        formula_parts.append(f"H{h_cnt if h_cnt > 1 else ''}")
     for el in sorted(counts.keys()):
-        formula_parts.append(f"{el}{counts[el] if counts[el] > 1 else ''}")
+        if el not in ('C', 'H'):
+            formula_parts.append(f"{el}{counts[el] if counts[el] > 1 else ''}")
     formula = "".join(formula_parts)
 
-    candidates = COMMON_ISOMERS.get(formula, [])
+    candidates = list(COMMON_ISOMERS.get(formula, []))
 
-    if not candidates:
+    # Если пользователь набросал только тяжелые атомы без водорода (например C, C, O),
+    # проверим также насыщенную водородом органическую формулу
+    if not candidates and 'C' in counts and 'H' not in counts:
+        c_num = counts['C']
+        n_num = counts.get('N', 0)
+        hal_num = sum(counts.get(x, 0) for x in ['F', 'Cl', 'Br', 'I'])
+        for unsat in [0, 1, 2]:
+            h_est = (2 * c_num + 2 + n_num - hal_num) - (2 * unsat)
+            if h_est > 0:
+                sat_parts = [f"C{c_num if c_num > 1 else ''}", f"H{h_est if h_est > 1 else ''}"]
+                for el in sorted(counts.keys()):
+                    if el not in ('C', 'H'):
+                        sat_parts.append(f"{el}{counts[el] if counts[el] > 1 else ''}")
+                sat_formula = "".join(sat_parts)
+                if sat_formula in COMMON_ISOMERS:
+                    candidates.extend(COMMON_ISOMERS[sat_formula])
+
+    if not candidates and len(elements) <= 25:
         try:
             url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula/{formula}/property/CanonicalSMILES,IUPACName/JSON"
             req = urllib.request.Request(url, headers={'User-Agent': 'ChemistryEngine/1.0'})
-            with urllib.request.urlopen(req, timeout=4) as resp:
+            with urllib.request.urlopen(req, timeout=3) as resp:
                 pdata = json.loads(resp.read().decode())
                 props = pdata.get('PropertyTable', {}).get('Properties', [])
                 seen = set()
-                for p in props[:8]:
+                for p in props[:6]:
                     sm = p.get('CanonicalSMILES')
                     if sm and sm not in seen:
                         seen.add(sm)
@@ -364,10 +453,6 @@ def auto_bond():
         except Exception:
             pass
 
-    if not candidates:
-        return jsonify({'error': f'No stable compounds found for formula: {formula}'}), 404
-
-    result_isomers = []
     for cand in candidates:
         try:
             sdf = generate_metal_complex_sdf(cand['smiles'])
@@ -380,7 +465,7 @@ def auto_bond():
             pass
 
     if not result_isomers:
-        return jsonify({'error': 'Could not calculate 3D conformers for this formula.'}), 500
+        return jsonify({'error': f'Не удалось сформировать связи для: {formula}'}), 400
 
     return jsonify({
         'mode': 'isomers',
@@ -398,10 +483,10 @@ def manage_hydrogens():
     if not sdf:
         return jsonify({'error': 'No SDF provided'}), 400
     try:
-        mol = Chem.MolFromMolBlock(sdf, sanitize=False)
+        mol = Chem.MolFromMolBlock(sdf, sanitize=False, removeHs=False)
         mol.UpdatePropertyCache(strict=False)
         try:
-            Chem.SanitizeMol(mol)
+            Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
         except Exception:
             pass
 
@@ -417,7 +502,7 @@ def manage_hydrogens():
             except Exception:
                 pass
         elif action == 'strip_all':
-            mol = Chem.RemoveHs(mol)
+            mol = Chem.RemoveHs(mol, sanitize=False)
         elif action == 'strip_nonpolar':
             rw_mol = Chem.RWMol(mol)
             to_remove = []
@@ -454,7 +539,7 @@ def calculate_charges():
     if not sdf:
         return jsonify({'error': 'No SDF provided'}), 400
     try:
-        mol = Chem.MolFromMolBlock(sdf, sanitize=False)
+        mol = Chem.MolFromMolBlock(sdf, sanitize=False, removeHs=False)
         mol.UpdatePropertyCache(strict=False)
         try:
             Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
@@ -549,12 +634,12 @@ def parse_cif_to_sdf(cif_text: str, strip_solvents: bool = False) -> str:
     rw_mol = Chem.RWMol()
     conf = Chem.Conformer()
     for i, (el, x, y, z) in enumerate(atoms):
-        idx = rw_mol.AddAtom(Chem.Atom(el if el in Chem.GetPeriodicTable().GetElementSymbol(1) or len(el)<=2 else 'C'))
+        idx = rw_mol.AddAtom(Chem.Atom(el if len(el) <= 2 else 'C'))
         conf.SetAtomPosition(idx, (x, y, z))
     rw_mol.AddConformer(conf)
     mol = rw_mol.GetMol()
 
-    mol = perceive_bonds_by_covalent_radii(mol)
+    mol = perceive_bonds_by_covalent_radii(mol, connect_distant=False)
 
     if strip_solvents:
         frags = Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=False)
@@ -584,7 +669,7 @@ def import_crystallography():
         if ext in ['pdb', 'ent']:
             mol = Chem.MolFromPDBBlock(raw_text, sanitize=False, removeHs=False)
             if mol.GetNumBonds() == 0:
-                mol = perceive_bonds_by_covalent_radii(mol)
+                mol = perceive_bonds_by_covalent_radii(mol, connect_distant=False)
             if strip_solvents:
                 frags = Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=False)
                 retained = [f for f in frags if Chem.MolToSmiles(f) not in COMMON_SOLVENTS and f.GetNumAtoms() > 3]
